@@ -16,6 +16,7 @@ class TetrisLogic:
         self.grid = [[None for _ in range(cols)] for _ in range(rows)]
         self.level = int(config.get('level', 1))
         self.score = 0; self.lines = 0
+        self.level_up_enabled = config.get('level_up', 'on') == 'on'
         
         self.ghost_enabled = config.get('ghost', 'on') == 'on'
         self.hold_enabled = config.get('hold', 'on') == 'on'
@@ -28,6 +29,7 @@ class TetrisLogic:
         
         self.cleared_blocks_anim = []
         self.lines_cleared_this_turn = 0 # Ghi nhận số dòng vừa ăn để đánh đối thủ
+        self.combo = 0  # Combo counter cho garbage multiplier
 
     def get_new_piece(self):
         return Piece(self.cols // 2 - 2, 0, random.choice(list(SHAPES.keys())))
@@ -73,7 +75,10 @@ class TetrisLogic:
             self.lines += lines_cleared
             pts = {1: 100, 2: 300, 3: 500, 4: 800}.get(lines_cleared, 800)
             self.score += pts * self.level
-            if self.lines >= self.level * 10: self.level += 1
+            if self.level_up_enabled and self.lines >= self.level * 10: self.level += 1
+            self.combo += 1  # Tăng combo
+        else:
+            self.combo = 0  # Reset combo nếu không xóa dòng
             
         self.lines_cleared_this_turn = lines_cleared
 
@@ -81,6 +86,17 @@ class TetrisLogic:
         res = self.lines_cleared_this_turn
         self.lines_cleared_this_turn = 0
         return res
+    
+    def get_garbage_amount(self):
+        """Calculate garbage to send with combo multiplier
+        1 line = 1 garbage, but multiplier increases with combo
+        Combo 5+ = 2x garbage"""
+        if self.lines_cleared_this_turn == 0:
+            return 0
+        garbage = self.lines_cleared_this_turn
+        if self.combo >= 5:
+            garbage *= 2
+        return garbage
 
     def add_garbage_lines(self, amount):
         if amount <= 0 or self.game_over: return
@@ -134,4 +150,8 @@ class TetrisLogic:
         return ghost
 
     def get_fall_speed(self):
-        return max(50, 1000 - (self.level - 1) * 80)
+        """Trả về thời gian (ms) giữa các lần khối rơi xuống dựa trên level
+        Sử dụng bảng gravity NES Tetris: frames (60 FPS) -> ms"""
+        gravity_frames = get_gravity_frames(self.level)
+        # Chuyển đổi frames (60 FPS) sang milliseconds
+        return int(gravity_frames * 1000 / 60)

@@ -3,8 +3,9 @@ import copy
 from settings import *
 
 class TetrisAI:
-    def __init__(self, difficulty):
+    def __init__(self, difficulty, ai_mode="balanced"):
         self.difficulty = difficulty
+        self.ai_mode = ai_mode  # "balanced", "aggressive", "defensive"
         
         # ĐÃ CÂN BẰNG LẠI TỐC ĐỘ ĐỂ PHÙ HỢP VỚI NGƯỜI CHƠI
         if difficulty == "easy": 
@@ -155,5 +156,15 @@ class TetrisAI:
         agg_height = sum(heights)
         bumpiness = sum(abs(heights[i] - heights[i+1]) for i in range(cols - 1))
 
-        a, b, c, d = -0.510066, 0.760666, -0.35663, -0.184483
+        # Chọn weights dựa trên ai_mode
+        if self.ai_mode == "aggressive":
+            # 🔥 Ưu tiên xóa dòng/gửi rác, ignore holes
+            a, b, c, d = -0.4, 1.2, -0.2, -0.05
+        elif self.ai_mode == "defensive":
+            # 🛡️ Ưu tiên an toàn, tránh cao/lỗ
+            a, b, c, d = -0.8, 0.5, -0.8, -0.3
+        else:  # balanced (default)
+            # Cân bằng
+            a, b, c, d = -0.510066, 0.760666, -0.35663, -0.184483
+            
         return (a * agg_height) + (b * lines_cleared) + (c * holes) + (d * bumpiness)
