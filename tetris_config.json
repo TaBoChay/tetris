@@ -1,0 +1,51 @@
+{
+  "sys": {
+    "volume": 80,
+    "sfx": "on",
+    "music": "on",
+    "brightness": "normal"
+  },
+  "solo": {
+    "level": "1",
+    "grid": "10x20",
+    "ghost": "on",
+    "hold": "on",
+    "level_up": "on",
+    "keys": {
+      "move_left": "left",
+      "move_right": "right",
+      "move_down": "down",
+      "rotate": "up",
+      "hard_drop": "space",
+      "hold": "z"
+    }
+  },
+  "pvp": {
+    "level": "1",
+    "grid": "10x20",
+    "ai_diff": "normal",
+    "ai_mode": "aggressive",
+    "p1_name": "PLAYER 1",
+    "p1_color": "cyan",
+    "p1_type": "human",
+    "p2_name": "AI",
+    "p2_color": "pink",
+    "p2_type": "ai",
+    "p1_keys": {
+      "move_left": "a",
+      "move_right": "d",
+      "move_down": "s",
+      "rotate": "w",
+      "hard_drop": "q",
+      "hold": "z"
+    },
+    "p2_keys": {
+      "move_left": "left",
+      "move_right": "right",
+      "move_down": "down",
+      "rotate": "up",
+      "hard_drop": "space",
+      "hold": "slash"
+    }
+  }
+}

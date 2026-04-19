@@ -1,5 +1,5 @@
 # menus.py
-import pygame
+import pygame  # type: ignore
 from settings import *
 from ui import *
 
@@ -23,7 +23,14 @@ def draw_about_menu(screen, mouse_pos):
     
     draw_glow_text(screen, "ABOUT THE GAME", title_font, CYAN, WIDTH//2, 50)
     
-    p1_x, p1_y, p1_w, p1_h = 60, 110, 330, 200
+    # Center panels - RULES and CONTROLS side by side
+    panel_w1 = 330
+    gap_between = 30
+    total_w_row1 = panel_w1 * 2 + gap_between
+    start_x_row1 = (WIDTH - total_w_row1) // 2
+    
+    p1_x = start_x_row1
+    p1_y, p1_w, p1_h = 110, 330, 200
     p1_surf = pygame.Surface((p1_w, p1_h), pygame.SRCALPHA)
     pygame.draw.rect(p1_surf, (*CYAN, 30), p1_surf.get_rect(), border_radius=8)
     screen.blit(p1_surf, (p1_x, p1_y))
@@ -33,7 +40,8 @@ def draw_about_menu(screen, mouse_pos):
     for i, line in enumerate(rules):
         render_bold_text(screen, line, small_font, WHITE, p1_x + 20, p1_y + 70 + i*16, "left")
 
-    p2_x, p2_y, p2_w, p2_h = 410, 110, 330, 200
+    p2_x = p1_x + p1_w + gap_between
+    p2_y, p2_w, p2_h = 110, 330, 200
     p2_surf = pygame.Surface((p2_w, p2_h), pygame.SRCALPHA)
     pygame.draw.rect(p2_surf, (*PINK, 30), p2_surf.get_rect(), border_radius=8)
     screen.blit(p2_surf, (p2_x, p2_y))
@@ -43,7 +51,10 @@ def draw_about_menu(screen, mouse_pos):
     for i, line in enumerate(controls):
         render_bold_text(screen, line, small_font, WHITE, p2_x + 20, p2_y + 60 + i*16, "left")
 
-    p3_x, p3_y, p3_w, p3_h = 60, 330, 680, 160
+    # Center SCORING panel
+    p3_w, p3_h = 680, 160
+    p3_x = (WIDTH - p3_w) // 2
+    p3_y = 330
     p3_surf = pygame.Surface((p3_w, p3_h), pygame.SRCALPHA)
     pygame.draw.rect(p3_surf, (*YELLOW, 30), p3_surf.get_rect(), border_radius=8)
     screen.blit(p3_surf, (p3_x, p3_y))
@@ -126,19 +137,24 @@ def draw_config_menu(screen, mouse_pos, sys_config):
     draw_glow_text(screen, "SETTINGS", title_font, CYAN, WIDTH//2, 50)
     draw_glow_text(screen, "System Configuration", small_font, PINK, WIDTH//2, 90)
 
-    buttons = {"volume": {}, "sfx": {}, "brightness": {}}
+    buttons = {"volume_slider": None, "sfx": {}, "brightness": {}}
     panel_w = 460; panel_x = (WIDTH - panel_w) // 2
 
+    # VOLUME SLIDER
     vol_y = 130
     vol_surf = pygame.Surface((panel_w, 100), pygame.SRCALPHA)
     pygame.draw.rect(vol_surf, (*CYAN, 30), vol_surf.get_rect(), border_radius=8)
     screen.blit(vol_surf, (panel_x, vol_y))
     pygame.draw.rect(screen, CYAN, (panel_x, vol_y, panel_w, 100), 2, border_radius=8)
-    draw_glow_text(screen, "VOLUME", main_font, CYAN, WIDTH//2, vol_y + 25, align="center")
-    buttons["volume"]["on"] = draw_toggle_button(screen, "ON", WIDTH//2 - 90, vol_y + 50, 80, 35, GREEN, mouse_pos, sys_config["volume"] == "on")
-    buttons["volume"]["off"] = draw_toggle_button(screen, "OFF", WIDTH//2 + 10, vol_y + 50, 80, 35, RED, mouse_pos, sys_config["volume"] == "off")
+    draw_glow_text(screen, "MASTER VOLUME", main_font, CYAN, WIDTH//2, vol_y + 25, align="center")
+    vol_value = sys_config.get("volume", 80)
+    if isinstance(vol_value, str):
+        vol_value = 100 if vol_value == "on" else 0
+    buttons["volume_slider"] = draw_slider(screen, panel_x + 60, vol_y + 55, panel_w - 120, 12, 0, 100, vol_value, CYAN, WHITE, mouse_pos)
+    draw_glow_text(screen, f"{vol_value}%", small_font, WHITE, WIDTH//2, vol_y + 85, align="center")
 
-    sfx_y = 250
+    # SFX TOGGLE
+    sfx_y = vol_y + 120
     sfx_surf = pygame.Surface((panel_w, 100), pygame.SRCALPHA)
     pygame.draw.rect(sfx_surf, (*PINK, 30), sfx_surf.get_rect(), border_radius=8)
     screen.blit(sfx_surf, (panel_x, sfx_y))
@@ -147,7 +163,8 @@ def draw_config_menu(screen, mouse_pos, sys_config):
     buttons["sfx"]["on"] = draw_toggle_button(screen, "ON", WIDTH//2 - 90, sfx_y + 50, 80, 35, GREEN, mouse_pos, sys_config["sfx"] == "on")
     buttons["sfx"]["off"] = draw_toggle_button(screen, "OFF", WIDTH//2 + 10, sfx_y + 50, 80, 35, RED, mouse_pos, sys_config["sfx"] == "off")
 
-    bri_y = 370
+    # BRIGHTNESS
+    bri_y = sfx_y + 120
     bri_surf = pygame.Surface((panel_w, 100), pygame.SRCALPHA)
     pygame.draw.rect(bri_surf, (*YELLOW, 30), bri_surf.get_rect(), border_radius=8)
     screen.blit(bri_surf, (panel_x, bri_y))
@@ -157,89 +174,191 @@ def draw_config_menu(screen, mouse_pos, sys_config):
     buttons["brightness"]["normal"] = draw_toggle_button(screen, "NORMAL", WIDTH//2 - 50, bri_y + 50, 100, 35, YELLOW, mouse_pos, sys_config["brightness"] == "normal")
     buttons["brightness"]["bright"] = draw_toggle_button(screen, "BRIGHT", WIDTH//2 + 65, bri_y + 50, 100, 35, CYAN, mouse_pos, sys_config["brightness"] == "bright")
 
-    buttons["reset"] = draw_neon_button(screen, "RESET DEFAULTS", WIDTH//2 - 150, 500, 300, 50, GRAY, mouse_pos)
+    buttons["reset"] = draw_neon_button(screen, "RESET DEFAULTS", WIDTH//2 - 150, bri_y + 130, 300, 50, GRAY, mouse_pos)
+    buttons["keys"] = draw_neon_button(screen, "KEY BINDINGS >", WIDTH//2 - 150, bri_y + 190, 300, 50, CYAN, mouse_pos)
     return btn_back, buttons
 
 def draw_pvp_settings(screen, mouse_pos, config, active_input):
     screen.fill(BG_COLOR)
     for block in floating_blocks: block.update(); block.draw(screen)
     draw_glow_text(screen, "PVP SETTINGS", title_font, CYAN, WIDTH//2, 40)
-    buttons = {"level": {}, "grid": {}, "ai_diff": {}, "p1_color": {}, "p1_type": {}, "p2_color": {}, "p2_type": {}}
+    buttons = {"level": {}, "grid": {}, "ai_diff": {}, "ai_mode": {}, "p1_color": {}, "p1_type": {}, "p2_color": {}, "p2_type": {}}
     
-    draw_glow_text(screen, "> START LEVEL", main_font, CYAN, 80, 90, align="left")
-    buttons["level"]["1"] = draw_toggle_button(screen, "LV 1", 280, 75, 80, 35, GREEN, mouse_pos, config["level"] == "1")
-    buttons["level"]["5"] = draw_toggle_button(screen, "LV 5", 370, 75, 80, 35, YELLOW, mouse_pos, config["level"] == "5")
-    buttons["level"]["10"] = draw_toggle_button(screen, "LV 10", 460, 75, 80, 35, ORANGE, mouse_pos, config["level"] == "10")
-    buttons["level"]["15"] = draw_toggle_button(screen, "LV 15", 550, 75, 80, 35, RED, mouse_pos, config["level"] == "15")
-
-    draw_glow_text(screen, "> GRID SIZE", main_font, PINK, 80, 140, align="left")
-    buttons["grid"]["8x15"] = draw_toggle_button(screen, "8x15", 280, 125, 100, 35, GREEN, mouse_pos, config["grid"] == "8x15")
-    buttons["grid"]["10x20"] = draw_toggle_button(screen, "10x20", 390, 125, 120, 35, YELLOW, mouse_pos, config["grid"] == "10x20")
-    buttons["grid"]["12x25"] = draw_toggle_button(screen, "12x25", 520, 125, 100, 35, RED, mouse_pos, config["grid"] == "12x25")
-
+    # ===== Panel-based layout =====
+    panel_w = 720
+    panel_x = (WIDTH - panel_w) // 2
+    opt_y = 70
+    opt_h = 55
+    opt_spacing = 62
+    
+    # LEVEL PANEL
+    level_surf = pygame.Surface((panel_w, opt_h), pygame.SRCALPHA)
+    pygame.draw.rect(level_surf, (*CYAN, 30), level_surf.get_rect(), border_radius=8)
+    screen.blit(level_surf, (panel_x, opt_y))
+    pygame.draw.rect(screen, CYAN, (panel_x, opt_y, panel_w, opt_h), 2, border_radius=8)
+    draw_glow_text(screen, "> START LEVEL", main_font, CYAN, panel_x + 20, opt_y + 26, align="left")
+    buttons["level"]["1"] = draw_toggle_button(screen, "LV 1", panel_x + 250, opt_y + 5, 65, 32, GREEN, mouse_pos, config["level"] == "1")
+    buttons["level"]["5"] = draw_toggle_button(screen, "LV 5", panel_x + 325, opt_y + 5, 65, 32, YELLOW, mouse_pos, config["level"] == "5")
+    buttons["level"]["10"] = draw_toggle_button(screen, "LV 10", panel_x + 400, opt_y + 5, 65, 32, ORANGE, mouse_pos, config["level"] == "10")
+    buttons["level"]["15"] = draw_toggle_button(screen, "LV 15", panel_x + 475, opt_y + 5, 65, 32, RED, mouse_pos, config["level"] == "15")
+    
+    # GRID PANEL
+    opt_y += opt_spacing
+    grid_surf = pygame.Surface((panel_w, opt_h), pygame.SRCALPHA)
+    pygame.draw.rect(grid_surf, (*PINK, 30), grid_surf.get_rect(), border_radius=8)
+    screen.blit(grid_surf, (panel_x, opt_y))
+    pygame.draw.rect(screen, PINK, (panel_x, opt_y, panel_w, opt_h), 2, border_radius=8)
+    draw_glow_text(screen, "> GRID SIZE", main_font, PINK, panel_x + 20, opt_y + 26, align="left")
+    buttons["grid"]["8x15"] = draw_toggle_button(screen, "8x15", panel_x + 250, opt_y + 5, 70, 32, GREEN, mouse_pos, config["grid"] == "8x15")
+    buttons["grid"]["10x20"] = draw_toggle_button(screen, "10x20", panel_x + 340, opt_y + 5, 80, 32, YELLOW, mouse_pos, config["grid"] == "10x20")
+    buttons["grid"]["12x25"] = draw_toggle_button(screen, "12x25", panel_x + 440, opt_y + 5, 70, 32, RED, mouse_pos, config["grid"] == "12x25")
+    
+    # AI SETTINGS
     show_ai_settings = config["p1_type"] == "ai" or config["p2_type"] == "ai"
+    panel_y = opt_y + opt_spacing
     if show_ai_settings:
-        draw_glow_text(screen, "> AI DIFFICULTY", main_font, RED, 80, 190, align="left")
-        buttons["ai_diff"]["easy"] = draw_toggle_button(screen, "EASY", 280, 175, 100, 35, GREEN, mouse_pos, config["ai_diff"] == "easy")
-        buttons["ai_diff"]["normal"] = draw_toggle_button(screen, "NORMAL", 390, 175, 120, 35, YELLOW, mouse_pos, config["ai_diff"] == "normal")
-        buttons["ai_diff"]["hard"] = draw_toggle_button(screen, "HARD", 520, 175, 100, 35, RED, mouse_pos, config["ai_diff"] == "hard")
-
-    panel_y = 230
-    p1_x, p1_w, p1_h = 60, 320, 230
-    p2_x, p2_w, p2_h = 420, 320, 230
-
-    p1_surf = pygame.Surface((p1_w, p1_h), pygame.SRCALPHA)
+        # AI DIFFICULTY PANEL
+        ai_diff_surf = pygame.Surface((panel_w, opt_h), pygame.SRCALPHA)
+        pygame.draw.rect(ai_diff_surf, (*RED, 30), ai_diff_surf.get_rect(), border_radius=8)
+        screen.blit(ai_diff_surf, (panel_x, panel_y))
+        pygame.draw.rect(screen, RED, (panel_x, panel_y, panel_w, opt_h), 2, border_radius=8)
+        draw_glow_text(screen, "> AI DIFFICULTY", main_font, RED, panel_x + 20, panel_y + 26, align="left")
+        buttons["ai_diff"]["easy"] = draw_toggle_button(screen, "EASY", panel_x + 250, panel_y + 5, 70, 32, GREEN, mouse_pos, config["ai_diff"] == "easy")
+        buttons["ai_diff"]["normal"] = draw_toggle_button(screen, "NORMAL", panel_x + 340, panel_y + 5, 95, 32, YELLOW, mouse_pos, config["ai_diff"] == "normal")
+        buttons["ai_diff"]["hard"] = draw_toggle_button(screen, "HARD", panel_x + 455, panel_y + 5, 70, 32, RED, mouse_pos, config["ai_diff"] == "hard")
+        
+        # AI MODE PANEL
+        panel_y += opt_spacing
+        ai_mode_surf = pygame.Surface((panel_w, opt_h), pygame.SRCALPHA)
+        pygame.draw.rect(ai_mode_surf, (*PURPLE, 30), ai_mode_surf.get_rect(), border_radius=8)
+        screen.blit(ai_mode_surf, (panel_x, panel_y))
+        pygame.draw.rect(screen, PURPLE, (panel_x, panel_y, panel_w, opt_h), 2, border_radius=8)
+        draw_glow_text(screen, "> AI MODE", main_font, PURPLE, panel_x + 20, panel_y + 26, align="left")
+        buttons["ai_mode"]["balanced"] = draw_toggle_button(screen, "BALANCED", panel_x + 250, panel_y + 5, 90, 32, CYAN, mouse_pos, config["ai_mode"] == "balanced")
+        buttons["ai_mode"]["aggressive"] = draw_toggle_button(screen, "AGGRESSIVE", panel_x + 360, panel_y + 5, 100, 32, ORANGE, mouse_pos, config["ai_mode"] == "aggressive")
+        buttons["ai_mode"]["defensive"] = draw_toggle_button(screen, "DEFENSIVE", panel_x + 480, panel_y + 5, 90, 32, BLUE, mouse_pos, config["ai_mode"] == "defensive")
+        panel_y += opt_spacing
+    
+    # PLAYER PANELS
+    p1_w, p2_w = 360, 360
+    p1_x = (WIDTH // 2) - p1_w - 15
+    p2_x = (WIDTH // 2) + 15
+    p_h = 220
+    
+    p1_surf = pygame.Surface((p1_w, p_h), pygame.SRCALPHA)
     pygame.draw.rect(p1_surf, (*CYAN, 30), p1_surf.get_rect(), border_radius=8)
     screen.blit(p1_surf, (p1_x, panel_y))
-    pygame.draw.rect(screen, CYAN, (p1_x, panel_y, p1_w, p1_h), 2, border_radius=8)
+    pygame.draw.rect(screen, CYAN, (p1_x, panel_y, p1_w, p_h), 2, border_radius=8)
     
-    p2_surf = pygame.Surface((p2_w, p2_h), pygame.SRCALPHA)
+    p2_surf = pygame.Surface((p2_w, p_h), pygame.SRCALPHA)
     pygame.draw.rect(p2_surf, (*PINK, 30), p2_surf.get_rect(), border_radius=8)
     screen.blit(p2_surf, (p2_x, panel_y))
-    pygame.draw.rect(screen, PINK, (p2_x, panel_y, p2_w, p2_h), 2, border_radius=8)
-
-    draw_glow_text(screen, "PLAYER 1", main_font, CYAN, p1_x + p1_w//2, panel_y + 20)
-    draw_glow_text(screen, "PLAYER 2", main_font, PINK, p2_x + p2_w//2, panel_y + 20)
-
-    draw_glow_text(screen, "NAME", small_font, WHITE, p1_x + p1_w//2, panel_y + 50)
-    draw_glow_text(screen, "NAME", small_font, WHITE, p2_x + p2_w//2, panel_y + 50)
+    pygame.draw.rect(screen, PINK, (p2_x, panel_y, p2_w, p_h), 2, border_radius=8)
     
-    buttons["p1_name_box"] = pygame.Rect(p1_x + 30, panel_y + 65, 260, 35)
-    buttons["p2_name_box"] = pygame.Rect(p2_x + 30, panel_y + 65, 260, 35)
+    draw_glow_text(screen, "PLAYER 1", main_font, CYAN, p1_x + p1_w//2, panel_y + 15)
+    draw_glow_text(screen, "PLAYER 2", main_font, PINK, p2_x + p2_w//2, panel_y + 15)
     
+    draw_glow_text(screen, "NAME", small_font, WHITE, p1_x + p1_w//2, panel_y + 30)
+    buttons["p1_name_box"] = pygame.Rect(p1_x + 15, panel_y + 42, 300, 25)
     pygame.draw.rect(screen, CYAN if active_input == "p1_name" else (*CYAN, 80), buttons["p1_name_box"], 2, border_radius=4)
-    pygame.draw.rect(screen, PINK if active_input == "p2_name" else (*PINK, 80), buttons["p2_name_box"], 2, border_radius=4)
-    
     cursor = "_" if (pygame.time.get_ticks() % 1000 < 500) else ""
     p1_display = config["p1_name"] + (cursor if active_input == "p1_name" else "")
-    p2_display = config["p2_name"] + (cursor if active_input == "p2_name" else "")
     render_bold_text(screen, p1_display, small_font, CYAN, buttons["p1_name_box"].centerx, buttons["p1_name_box"].centery, "center")
+    
+    draw_glow_text(screen, "NAME", small_font, WHITE, p2_x + p2_w//2, panel_y + 30)
+    buttons["p2_name_box"] = pygame.Rect(p2_x + 15, panel_y + 42, 300, 25)
+    pygame.draw.rect(screen, PINK if active_input == "p2_name" else (*PINK, 80), buttons["p2_name_box"], 2, border_radius=4)
+    p2_display = config["p2_name"] + (cursor if active_input == "p2_name" else "")
     render_bold_text(screen, p2_display, small_font, PINK, buttons["p2_name_box"].centerx, buttons["p2_name_box"].centery, "center")
-
-    draw_glow_text(screen, "COLOR", small_font, WHITE, p1_x + p1_w//2, panel_y + 115)
-    buttons["p1_color"]["cyan"] = draw_toggle_button(screen, "CYN", p1_x + 30, panel_y + 130, 60, 30, CYAN, mouse_pos, config["p1_color"] == "cyan")
-    buttons["p1_color"]["lime"] = draw_toggle_button(screen, "LIM", p1_x + 100, panel_y + 130, 60, 30, GREEN, mouse_pos, config["p1_color"] == "lime")
-    buttons["p1_color"]["gold"] = draw_toggle_button(screen, "GLD", p1_x + 170, panel_y + 130, 60, 30, YELLOW, mouse_pos, config["p1_color"] == "gold")
-    buttons["p1_color"]["red"] = draw_toggle_button(screen, "RED", p1_x + 240, panel_y + 130, 60, 30, RED, mouse_pos, config["p1_color"] == "red")
-
-    draw_glow_text(screen, "COLOR", small_font, WHITE, p2_x + p2_w//2, panel_y + 115)
-    buttons["p2_color"]["pink"] = draw_toggle_button(screen, "PNK", p2_x + 30, panel_y + 130, 60, 30, PINK, mouse_pos, config["p2_color"] == "pink")
-    buttons["p2_color"]["lime"] = draw_toggle_button(screen, "LIM", p2_x + 100, panel_y + 130, 60, 30, GREEN, mouse_pos, config["p2_color"] == "lime")
-    buttons["p2_color"]["gold"] = draw_toggle_button(screen, "GLD", p2_x + 170, panel_y + 130, 60, 30, YELLOW, mouse_pos, config["p2_color"] == "gold")
-    buttons["p2_color"]["cyan"] = draw_toggle_button(screen, "CYN", p2_x + 240, panel_y + 130, 60, 30, CYAN, mouse_pos, config["p2_color"] == "cyan")
-
+    
+    draw_glow_text(screen, "COLOR", small_font, WHITE, p1_x + p1_w//2, panel_y + 75)
+    buttons["p1_color"]["cyan"] = draw_toggle_button(screen, "C", p1_x + 10, panel_y + 85, 60, 24, CYAN, mouse_pos, config["p1_color"] == "cyan")
+    buttons["p1_color"]["lime"] = draw_toggle_button(screen, "L", p1_x + 75, panel_y + 85, 60, 24, GREEN, mouse_pos, config["p1_color"] == "lime")
+    buttons["p1_color"]["gold"] = draw_toggle_button(screen, "G", p1_x + 140, panel_y + 85, 60, 24, YELLOW, mouse_pos, config["p1_color"] == "gold")
+    buttons["p1_color"]["red"] = draw_toggle_button(screen, "R", p1_x + 205, panel_y + 85, 60, 24, RED, mouse_pos, config["p1_color"] == "red")
+    
+    draw_glow_text(screen, "COLOR", small_font, WHITE, p2_x + p2_w//2, panel_y + 75)
+    buttons["p2_color"]["pink"] = draw_toggle_button(screen, "P", p2_x + 10, panel_y + 85, 60, 24, PINK, mouse_pos, config["p2_color"] == "pink")
+    buttons["p2_color"]["lime"] = draw_toggle_button(screen, "L", p2_x + 75, panel_y + 85, 60, 24, GREEN, mouse_pos, config["p2_color"] == "lime")
+    buttons["p2_color"]["gold"] = draw_toggle_button(screen, "G", p2_x + 140, panel_y + 85, 60, 24, YELLOW, mouse_pos, config["p2_color"] == "gold")
+    buttons["p2_color"]["cyan"] = draw_toggle_button(screen, "C", p2_x + 205, panel_y + 85, 60, 24, CYAN, mouse_pos, config["p2_color"] == "cyan")
+    
     p1_ai_color = GRAY if config["p2_type"] == "ai" else RED
     p2_ai_color = GRAY if config["p1_type"] == "ai" else RED
+    
+    draw_glow_text(screen, "OPP", small_font, WHITE, p1_x + p1_w//2, panel_y + 125)
+    buttons["p1_type"]["human"] = draw_toggle_button(screen, "HUM", p1_x + 30, panel_y + 135, 120, 24, GREEN, mouse_pos, config["p1_type"] == "human")
+    buttons["p1_type"]["ai"] = draw_toggle_button(screen, "AI", p1_x + 160, panel_y + 135, 120, 24, p1_ai_color, mouse_pos, config["p1_type"] == "ai")
+    
+    draw_glow_text(screen, "OPP", small_font, WHITE, p2_x + p2_w//2, panel_y + 125)
+    buttons["p2_type"]["human"] = draw_toggle_button(screen, "HUM", p2_x + 30, panel_y + 135, 120, 24, GREEN, mouse_pos, config["p2_type"] == "human")
+    buttons["p2_type"]["ai"] = draw_toggle_button(screen, "AI", p2_x + 160, panel_y + 135, 120, 24, p2_ai_color, mouse_pos, config["p2_type"] == "ai")
+    
+    # KEY BINDING BUTTONS - ALIGN WITH PLAYER PANELS
+    p1_key_x = p1_x  # Left align with P1 panel
+    p2_key_x = p2_x  # Left align with P2 panel (same as P1)
+    buttons["p1_keys"] = draw_neon_button(screen, "P1 KEYS", p1_key_x, 555, 150, 35, GREEN, mouse_pos)
+    buttons["p2_keys"] = draw_neon_button(screen, "P2 KEYS", p2_key_x, 555, 150, 35, PINK, mouse_pos)
+    
+    buttons["back"] = draw_neon_button(screen, "< BACK", 120, 610, 220, 50, RED, mouse_pos)
+    buttons["start"] = draw_neon_button(screen, "START PVP >", 460, 610, 220, 50, GREEN, mouse_pos)
+    
+    return buttons
 
-    draw_glow_text(screen, "OPPONENT TYPE", small_font, WHITE, p1_x + p1_w//2, panel_y + 175)
-    buttons["p1_type"]["human"] = draw_toggle_button(screen, "HUMAN", p1_x + 50, panel_y + 190, 100, 30, GREEN, mouse_pos, config["p1_type"] == "human")
-    buttons["p1_type"]["ai"] = draw_toggle_button(screen, "AI", p1_x + 170, panel_y + 190, 100, 30, p1_ai_color, mouse_pos, config["p1_type"] == "ai")
-
-    draw_glow_text(screen, "OPPONENT TYPE", small_font, WHITE, p2_x + p2_w//2, panel_y + 175)
-    buttons["p2_type"]["human"] = draw_toggle_button(screen, "HUMAN", p2_x + 50, panel_y + 190, 100, 30, GREEN, mouse_pos, config["p2_type"] == "human")
-    buttons["p2_type"]["ai"] = draw_toggle_button(screen, "AI", p2_x + 170, panel_y + 190, 100, 30, p2_ai_color, mouse_pos, config["p2_type"] == "ai")
-
-    buttons["back"] = draw_neon_button(screen, "< BACK", 120, 485, 220, 50, RED, mouse_pos)
-    buttons["start"] = draw_neon_button(screen, "START PVP >", 460, 485, 220, 50, GREEN, mouse_pos)
-
+def draw_keyconfig_menu(screen, mouse_pos, mode, config, rebinding_key=None):
+    """Draw key configuration menu for SOLO or PVP mode"""
+    screen.fill(BG_COLOR)
+    for block in floating_blocks: block.update(); block.draw(screen)
+    
+    # Safe default if mode is None
+    if mode is None:
+        mode = "solo"
+    
+    # Safe default if mode is None
+    if mode is None:
+        mode = "solo"
+    
+    if mode == "solo":
+        title = "SOLO KEY CONFIG"
+        keys_dict = config.get("keys", DEFAULT_SOLO_KEYS)
+        key_actions = ["move_left", "move_right", "move_down", "rotate", "hard_drop", "hold"]
+        action_labels = ["MOVE LEFT", "MOVE RIGHT", "MOVE DOWN", "ROTATE", "HARD DROP", "HOLD"]
+        color = CYAN
+    elif mode == "pvp_p1":
+        title = "PVP P1 KEY CONFIG"
+        keys_dict = config.get("p1_keys", DEFAULT_PVP_P1_KEYS)
+        key_actions = ["move_left", "move_right", "move_down", "rotate", "hard_drop", "hold"]
+        action_labels = ["MOVE LEFT", "MOVE RIGHT", "MOVE DOWN", "ROTATE", "HARD DROP", "HOLD"]
+        color = GREEN
+    else:  # pvp_p2
+        title = "PVP P2 KEY CONFIG"
+        keys_dict = config.get("p2_keys", DEFAULT_PVP_P2_KEYS)
+        key_actions = ["move_left", "move_right", "move_down", "rotate", "hard_drop", "hold"]
+        action_labels = ["MOVE LEFT", "MOVE RIGHT", "MOVE DOWN", "ROTATE", "HARD DROP", "HOLD"]
+        color = PINK
+    
+    draw_glow_text(screen, title, title_font, color, WIDTH//2, 40)
+    if rebinding_key:
+        draw_glow_text(screen, f"PRESS KEY FOR: {rebinding_key.upper()}", main_font, YELLOW, WIDTH//2, 100)
+    
+    buttons = {}
+    panel_w = 700
+    panel_x = (WIDTH - panel_w) // 2
+    key_y = 140
+    
+    for i, (action, label) in enumerate(zip(key_actions, action_labels)):
+        current_key_str = keys_dict.get(action, "left")
+        key_display = get_key_display_name(get_key_constant(current_key_str))
+        
+        # Label
+        render_bold_text(screen, f"{label}:", small_font, color, panel_x + 30, key_y + i*50, "left")
+        
+        # Button to click to rebind
+        btn = draw_neon_button(screen, f"[{key_display}]", panel_x + 280, key_y + i*50 - 12, 350, 35, 
+                               YELLOW if rebinding_key == action else GRAY, mouse_pos)
+        buttons[action] = btn
+    
+    btn_back = draw_neon_button(screen, "< BACK", WIDTH//2 - 100, 620, 200, 50, RED, mouse_pos)
+    buttons["back"] = btn_back
+    
     return buttons
