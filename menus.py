@@ -362,3 +362,38 @@ def draw_keyconfig_menu(screen, mouse_pos, mode, config, rebinding_key=None):
     buttons["back"] = btn_back
     
     return buttons
+
+def draw_pause_menu(screen, mouse_pos, sys_config, game_state):
+    overlay = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
+    overlay.fill((0, 0, 0, 180))
+    screen.blit(overlay, (0, 0))
+    
+    draw_glow_text(screen, "PAUSED", title_font, CYAN, WIDTH//2, 100)
+    
+    buttons = {"volume_slider": None, "keys_solo": None, "keys_p1": None, "keys_p2": None, "resume": None, "quit": None}
+    
+    panel_w = 460
+    panel_x = (WIDTH - panel_w) // 2
+    
+    # VOLUME SLIDER
+    vol_y = 180
+    vol_surf = pygame.Surface((panel_w, 100), pygame.SRCALPHA)
+    pygame.draw.rect(vol_surf, (*CYAN, 30), vol_surf.get_rect(), border_radius=8)
+    screen.blit(vol_surf, (panel_x, vol_y))
+    pygame.draw.rect(screen, CYAN, (panel_x, vol_y, panel_w, 100), 2, border_radius=8)
+    draw_glow_text(screen, "MASTER VOLUME", main_font, CYAN, WIDTH//2, vol_y + 25, align="center")
+    vol_value = sys_config.get("volume", 80)
+    if isinstance(vol_value, str): vol_value = 100 if vol_value == "on" else 0
+    buttons["volume_slider"] = draw_slider(screen, panel_x + 60, vol_y + 55, panel_w - 120, 12, 0, 100, vol_value, CYAN, WHITE, mouse_pos)
+    draw_glow_text(screen, f"{vol_value}%", small_font, WHITE, WIDTH//2, vol_y + 85, align="center")
+
+    if game_state == "SOLO_GAME":
+        buttons["keys_solo"] = draw_neon_button(screen, "KEY BINDINGS", WIDTH//2 - 150, 310, 300, 50, GREEN, mouse_pos)
+    else:
+        buttons["keys_p1"] = draw_neon_button(screen, "P1 KEYS", WIDTH//2 - 150, 310, 140, 50, GREEN, mouse_pos)
+        buttons["keys_p2"] = draw_neon_button(screen, "P2 KEYS", WIDTH//2 + 10, 310, 140, 50, PINK, mouse_pos)
+
+    buttons["resume"] = draw_neon_button(screen, "RESUME", WIDTH//2 - 150, 380, 300, 50, YELLOW, mouse_pos)
+    buttons["quit"] = draw_neon_button(screen, "QUIT TO MENU", WIDTH//2 - 150, 450, 300, 50, RED, mouse_pos)
+    
+    return buttons
