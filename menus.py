@@ -185,6 +185,63 @@ def draw_config_menu(screen, mouse_pos, sys_config):
     buttons["keys"] = draw_neon_button(screen, "KEY BINDINGS >", WIDTH//2 - 150, bri_y + 190, 300, 50, CYAN, mouse_pos)
     return btn_back, buttons
 
+def draw_ai_mode_tooltip(screen, mouse_pos):
+    tooltip_w = 420
+    tooltip_h = 420
+    tt_x = mouse_pos[0] + 15
+    tt_y = mouse_pos[1] + 15
+    if tt_x + tooltip_w > WIDTH:
+        tt_x = mouse_pos[0] - tooltip_w - 15
+    if tt_y + tooltip_h > HEIGHT:
+        tt_y = HEIGHT - tooltip_h - 10
+        
+    tt_surf = pygame.Surface((tooltip_w, tooltip_h), pygame.SRCALPHA)
+    pygame.draw.rect(tt_surf, (20, 20, 20, 240), tt_surf.get_rect(), border_radius=8)
+    screen.blit(tt_surf, (tt_x, tt_y))
+    pygame.draw.rect(screen, CYAN, (tt_x, tt_y, tooltip_w, tooltip_h), 2, border_radius=8)
+    
+    try:
+        font = pygame.font.SysFont("Arial", 13)
+        font_bold = pygame.font.SysFont("Arial", 14, bold=True)
+        title_font_sys = pygame.font.SysFont("Arial", 15, bold=True)
+    except:
+        font = small_font
+        font_bold = small_font
+        title_font_sys = main_font
+        
+    lines = [
+        ("3 Implemented AI Modes:", title_font_sys, YELLOW),
+        ("", font, WHITE),
+        ("BALANCED", font_bold, CYAN),
+        ("Weights: height=-0.51, lines=0.76, holes=-0.36, bumpiness=-0.18", font, WHITE),
+        ("Mindset: Balanced, safe & effective", font, WHITE),
+        ("- Both offensive and defensive", font, WHITE),
+        ("- Not too risky", font, WHITE),
+        ("- Easy to play vs average players", font, WHITE),
+        ("", font, WHITE),
+        ("AGGRESSIVE", font_bold, ORANGE),
+        ("Weights: height=-0.4, lines=1.2, holes=-0.2, bumpiness=-0.1", font, WHITE),
+        ("Mindset: Clear lines at all costs to send garbage", font, WHITE),
+        ("- Prioritize clear lines (1.2x weight)", font, WHITE),
+        ("- Ignore holes -> very aggressive", font, WHITE),
+        ("- Ignore bumpiness -> fearless", font, WHITE),
+        ("- Spam garbage, make opponent uncomfortable", font, WHITE),
+        ("", font, WHITE),
+        ("DEFENSIVE", font_bold, BLUE),
+        ("Weights: height=-0.8, lines=0.5, holes=-0.8, bumpiness=-0.3", font, WHITE),
+        ("Mindset: Play safe, avoid losing", font, WHITE),
+        ("- Prioritize survival: height -0.8", font, WHITE),
+        ("- Avoid holes: holes -0.8", font, WHITE),
+        ("- Avoid bumpiness: bumpiness -0.3", font, WHITE),
+        ("- Stay defensive on standby", font, WHITE),
+    ]
+    
+    y_offset = tt_y + 15
+    for text, f, color in lines:
+        text_surf = f.render(text, True, color)
+        screen.blit(text_surf, (tt_x + 15, y_offset))
+        y_offset += text_surf.get_height() + 4
+
 def draw_pvp_settings(screen, mouse_pos, config, active_input):
     """
     Vẽ màn hình cài đặt cho chế độ PvP (Player vs Player / Player vs AI).
@@ -248,6 +305,9 @@ def draw_pvp_settings(screen, mouse_pos, config, active_input):
         buttons["ai_mode"]["balanced"] = draw_toggle_button(screen, "BALANCED", panel_x + 250, panel_y + 5, 90, 32, CYAN, mouse_pos, config["ai_mode"] == "balanced")
         buttons["ai_mode"]["aggressive"] = draw_toggle_button(screen, "AGGRESSIVE", panel_x + 360, panel_y + 5, 100, 32, ORANGE, mouse_pos, config["ai_mode"] == "aggressive")
         buttons["ai_mode"]["defensive"] = draw_toggle_button(screen, "DEFENSIVE", panel_x + 480, panel_y + 5, 90, 32, BLUE, mouse_pos, config["ai_mode"] == "defensive")
+        
+        buttons["ai_mode_info"] = draw_neon_button(screen, "!", panel_x + 600, panel_y + 5, 32, 32, YELLOW, mouse_pos)
+        
         panel_y += opt_spacing
     
     # PLAYER PANELS
@@ -316,6 +376,9 @@ def draw_pvp_settings(screen, mouse_pos, config, active_input):
     buttons["back"] = draw_neon_button(screen, "< BACK", 120, 610, 220, 50, RED, mouse_pos)
     buttons["start"] = draw_neon_button(screen, "START PVP >", 460, 610, 220, 50, GREEN, mouse_pos)
     
+    if "ai_mode_info" in buttons and buttons["ai_mode_info"].collidepoint(mouse_pos):
+        draw_ai_mode_tooltip(screen, mouse_pos)
+        
     return buttons
 
 def draw_keyconfig_menu(screen, mouse_pos, mode, config, rebinding_key=None):
