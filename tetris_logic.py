@@ -16,6 +16,7 @@ class TetrisLogic:
         self.cols = cols; self.rows = rows
         self.grid = [[None for _ in range(cols)] for _ in range(rows)]
         self.level = int(config.get('level', 1))
+        self.start_level = self.level
         self.score = 0; self.lines = 0
         self.level_up_enabled = config.get('level_up', 'on') == 'on'
         
@@ -98,7 +99,10 @@ class TetrisLogic:
             self.lines += lines_cleared
             pts = {1: 100, 2: 300, 3: 500, 4: 800}.get(lines_cleared, 800)
             self.score += pts * self.level
-            if self.level_up_enabled and self.lines >= self.level * 10: self.level += 1
+            if self.level_up_enabled:
+                new_level = self.start_level + (self.lines // 10)
+                if new_level > self.level:
+                    self.level = new_level
             self.combo += 1  # Tăng combo
         else:
             self.combo = 0  # Reset combo nếu không xóa dòng
