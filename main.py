@@ -12,6 +12,10 @@ from ai import TetrisAI
 
 # Helper: Check if key matches configured key
 def key_matches(event_key, config_key_name, key_config):
+    """
+    Kiểm tra xem phím bấm (event_key) có khớp với cấu hình phím đã thiết lập hay không.
+    Trả về True nếu khớp.
+    """
     return event_key == get_key_constant(key_config.get(config_key_name, "left"))
 
 # Config menu slider geometry (phải khớp với menus.py)
@@ -28,6 +32,11 @@ pygame.display.set_caption("Tetris Cyberpunk Edition")
 pygame.key.set_repeat(200, 50)
 
 def main():
+    """
+    Hàm chính của chương trình.
+    Khởi tạo game loop, xử lý sự kiện, cập nhật logic và vẽ giao diện
+    tuỳ theo trạng thái hiện tại (Menu, Settings, Solo Game, PvP Game, v.v.).
+    """
     clock = pygame.time.Clock()
     current_state = "MAIN_MENU"
     active_input = None
@@ -63,6 +72,8 @@ def main():
     p2_game_over_sounded = False
 
     def spawn_particles(logic, particles_list, offset_x=0, block_size=BLOCK_SIZE):
+        # Tạo hiệu ứng hạt (particles) khi một dòng gạch bị phá huỷ.
+        # Tính toán vị trí phát sinh hạt dưa trên toạ độ của các khối gạch đã bị xoá.
         if logic.cleared_blocks_anim:
             board_w = logic.cols * block_size
             board_x = offset_x + (WIDTH//2 - board_w) // 2 if offset_x != -1 else (WIDTH - board_w) // 2
@@ -159,16 +170,25 @@ def main():
 
             # Handle key rebinding
             if current_state == "KEYCONFIG_MENU" and event.type == pygame.KEYDOWN and rebinding_key_action:
-                new_key_name = get_key_display_name(event.key).lower()
-                if rebinding_key_mode == "solo":
-                    solo_config.setdefault("keys", DEFAULT_SOLO_KEYS.copy())[rebinding_key_action] = new_key_name
-                elif rebinding_key_mode == "pvp_p1":
-                    pvp_config.setdefault("p1_keys", DEFAULT_PVP_P1_KEYS.copy())[rebinding_key_action] = new_key_name
-                elif rebinding_key_mode == "pvp_p2":
-                    pvp_config.setdefault("p2_keys", DEFAULT_PVP_P2_KEYS.copy())[rebinding_key_action] = new_key_name
-                rebinding_key_action = None
-                config_dirty = True
-                play_sfx("button")
+                if event.key == pygame.K_ESCAPE:
+                    rebinding_key_action = None
+                    play_sfx("button")
+                else:
+                    new_key_name = get_key_display_name(event.key).lower()
+                    if new_key_name == "unknown" and event.unicode and event.unicode.isprintable() and len(event.unicode.strip()) > 0:
+                        new_key_name = event.unicode.lower()
+                        
+                    if new_key_name != "unknown":
+                        if rebinding_key_mode == "solo":
+                            solo_config.setdefault("keys", DEFAULT_SOLO_KEYS.copy())[rebinding_key_action] = new_key_name
+                        elif rebinding_key_mode == "pvp_p1":
+                            pvp_config.setdefault("p1_keys", DEFAULT_PVP_P1_KEYS.copy())[rebinding_key_action] = new_key_name
+                        elif rebinding_key_mode == "pvp_p2":
+                            pvp_config.setdefault("p2_keys", DEFAULT_PVP_P2_KEYS.copy())[rebinding_key_action] = new_key_name
+                        config_dirty = True
+                        
+                    rebinding_key_action = None
+                    play_sfx("button")
 
             if current_state == "SOLO_GAME" and solo_logic and not solo_logic.game_over and not is_paused:
                 if event.type == pygame.KEYDOWN:
@@ -314,11 +334,11 @@ def main():
                         btns = {}
                         # Back button position
                         btns["back"] = pygame.Rect(WIDTH//2 - 100, 620, 200, 50)
-                        # Key action buttons (2 columns, 3 rows)
+                        
+                        panel_w = 700
+                        panel_x = (WIDTH - panel_w) // 2
                         for i, action in enumerate(key_actions):
-                            col = i // 3
-                            row = i % 3
-                            btns[action] = pygame.Rect(100 + col*280, key_y + row*50 - 12, 350, 35)
+                            btns[action] = pygame.Rect(panel_x + 280, key_y + i*50 - 12, 350, 35)
                         
                         if "back" in btns and btns["back"].collidepoint(mouse_pos):
                             rebinding_key_action = None
@@ -430,13 +450,13 @@ def main():
                                         pvp_config["ai_mode"] = key
                                         config_dirty = True
                             # Key binding buttons
-                            if btns["p1_keys"].collidepoint(mouse_pos):
+                            if "p1_keys" in btns and btns["p1_keys"].collidepoint(mouse_pos):
                                 current_state = "KEYCONFIG_MENU"
                                 rebinding_key_mode = "pvp_p1"
                                 rebinding_key_action = None
                                 rebinding_key_from = "pvp_settings"
                                 play_sfx("button")
-                            elif btns["p2_keys"].collidepoint(mouse_pos):
+                            elif "p2_keys" in btns and btns["p2_keys"].collidepoint(mouse_pos):
                                 current_state = "KEYCONFIG_MENU"
                                 rebinding_key_mode = "pvp_p2"
                                 rebinding_key_action = None
@@ -486,6 +506,10 @@ def main():
                     if btns["menu"] and btns["menu"].collidepoint(mouse_pos):
                         game_mode = None
                         current_state = "MAIN_MENU"
+                        play_sfx("button")
+                    elif btns.get("pause") and btns["pause"].collidepoint(mouse_pos):
+                        is_paused = True
+                        play_sfx("button")
                     elif btns["retry"] and btns["retry"].collidepoint(mouse_pos):
                         solo_logic = TetrisLogic(solo_config)
                         fall_time = 0; particles.clear()
@@ -493,7 +517,12 @@ def main():
 
                 elif current_state == "PVP_GAME" and not is_paused:
                     btns = draw_pvp_screen(screen, mouse_pos, pvp_config, p1_logic, p2_logic, p1_particles, p2_particles)
-                    if btns["menu"].collidepoint(mouse_pos): current_state = "MAIN_MENU"
+                    if btns["menu"] and btns["menu"].collidepoint(mouse_pos): 
+                        current_state = "MAIN_MENU"
+                        play_sfx("button")
+                    elif btns.get("pause") and btns["pause"].collidepoint(mouse_pos):
+                        is_paused = True
+                        play_sfx("button")
                     elif btns["retry"] and btns["retry"].collidepoint(mouse_pos):
                         p1_logic = TetrisLogic(pvp_config)
                         p2_logic = TetrisLogic(pvp_config)

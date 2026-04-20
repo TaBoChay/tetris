@@ -21,11 +21,13 @@ _music_enabled = True
 
 
 def _ensure_dirs():
+    # Đảm bảo các thư mục lưu trữ âm thanh (SFX, Music) đã được tạo.
     for folder in (AUDIO_DIR, SFX_DIR, MUSIC_DIR):
         folder.mkdir(parents=True, exist_ok=True)
 
 
 def _write_wav(path, samples, channels=1):
+    # Ghi dữ liệu âm thanh (bytes) thành file định dạng .wav.
     with wave.open(str(path), "wb") as file:
         file.setnchannels(channels)
         file.setsampwidth(SAMPLE_WIDTH)
@@ -34,6 +36,7 @@ def _write_wav(path, samples, channels=1):
 
 
 def _make_samples(frequencies, duration, volume=0.5, waveform="sine", channels=1):
+    # Tạo mảng byte âm thanh thô dựa trên các tần số, dạng sóng và thời lượng cung cấp.
     length = int(SAMPLE_RATE * duration)
     buffer = bytearray()
     for i in range(length):
@@ -52,12 +55,14 @@ def _make_samples(frequencies, duration, volume=0.5, waveform="sine", channels=1
 
 
 def _generate_sound(path, frequencies, duration, volume=0.35, waveform="sine", channels=1):
+
     if not path.exists():
         samples = _make_samples(frequencies, duration, volume=volume, waveform=waveform, channels=channels)
         _write_wav(path, samples, channels=channels)
 
 
 def _generate_assets():
+    # Tạo toàn bộ tài nguyên âm thanh mặc định (nhạc nền và hiệu ứng) nếu chúng bị thiếu.
     _ensure_dirs()
     _generate_sound(SFX_DIR / "button.wav", [(880, 1.0)], 0.08, volume=0.3)
     _generate_sound(SFX_DIR / "move.wav", [(660, 1.0)], 0.05, volume=0.25)
@@ -101,6 +106,7 @@ def _load_sounds():
 
 
 def init_audio():
+    # Khởi tạo hệ thống âm thanh, sinh file (nếu thiếu) và tải lên bộ nhớ.
     global _initialized, _available
     if _initialized:
         return
@@ -116,7 +122,7 @@ def init_audio():
 
 
 def set_master_volume(volume_percent):
-    """Set master volume from 0-100 integer to 0.0-1.0 float"""
+    # Set master volume from 0-100 integer to 0.0-1.0 float
     global _master_volume
     _master_volume = max(0.0, min(1.0, volume_percent / 100.0))
     if not _available:
@@ -128,11 +134,13 @@ def set_master_volume(volume_percent):
 
 
 def set_sfx_enabled(enabled):
+    # Bật/tắt hiệu ứng âm thanh (Sound Effects).
     global _sfx_enabled
     _sfx_enabled = enabled
 
 
 def set_music_enabled(enabled):
+    # Bật/tắt nhạc nền (Music). Sẽ tự động dừng nhạc nếu tắt.
     global _music_enabled
     _music_enabled = enabled
     if not _available:
@@ -144,6 +152,7 @@ def set_music_enabled(enabled):
 
 
 def play_sfx(name):
+    # Phát một hiệu ứng âm thanh (SFX) theo tên (vd: 'move', 'clear').
     if not _available or not _sfx_enabled or _master_volume == 0:
         return
     sound = _sounds.get(name)
@@ -152,6 +161,7 @@ def play_sfx(name):
 
 
 def play_music(track_name="background", loops=-1):
+    """Phát nhạc nền lặp lại vô hạn. Tự tạo nhạc mặc định nếu không tìm thấy file."""
     global _current_music
     if not _available or not _music_enabled or _master_volume == 0:
         return
@@ -191,11 +201,13 @@ def play_music(track_name="background", loops=-1):
 
 
 def stop_music():
+    """Dừng ngay lập tức nhạc nền đang phát."""
     if _available:
         pygame.mixer.music.stop()
 
 
 def update_audio_settings(config):
+     """Cập nhật các thiết lập âm thanh (volume, SFX, music) từ bộ cấu hình hệ thống."""
      vol = config.get("volume", 80)
      if isinstance(vol, str):
          vol = 100 if vol == "on" else 0
@@ -209,4 +221,5 @@ def apply_volume_only(volume_value):
 
 
 def is_audio_available():
+    """Kiểm tra xem hệ thống âm thanh (Pygame Mixer) có sẵn sàng không."""
     return _available

@@ -4,6 +4,7 @@ from settings import *
 from ui import *
 
 def draw_play_screen_solo(screen, mouse_pos, logic, particles, game_mode=None, blitz_time=0):
+    # Vẽ màn hình chơi game
     screen.fill(BG_COLOR)
     if game_mode == "40L":
         draw_glow_text(screen, "40 LINES", title_font, GREEN, WIDTH//2, 40, align="center")
@@ -109,7 +110,7 @@ def draw_play_screen_solo(screen, mouse_pos, logic, particles, game_mode=None, b
     status_color = RED if logic.game_over else WHITE
     draw_glow_text(screen, status_text, main_font, status_color, right_x, 285, align="left")
 
-    buttons = {"menu": None, "retry": None}
+    buttons = {"menu": None, "retry": None, "pause": None}
 
     if logic.game_over:
         overlay = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
@@ -128,20 +129,23 @@ def draw_play_screen_solo(screen, mouse_pos, logic, particles, game_mode=None, b
         buttons["retry"] = draw_neon_button(screen, "RETRY", WIDTH//2 - btn_w - 20, HEIGHT//2 + 40, btn_w, btn_h, GREEN, mouse_pos)
         buttons["menu"] = draw_neon_button(screen, "MENU", WIDTH//2 + 20, HEIGHT//2 + 40, btn_w, btn_h, PINK, mouse_pos)
     else:
-        buttons["menu"] = draw_neon_button(screen, "MENU", WIDTH - 140, 20, 100, 40, PINK, mouse_pos)
+        buttons["pause"] = draw_neon_button(screen, "PAUSE", WIDTH - 140, 20, 100, 40, PINK, mouse_pos)
 
     return buttons
 
 
 def draw_pvp_screen(screen, mouse_pos, pvp_config, logic1, logic2, particles1, particles2):
+    # Vẽ màn hình chơi game cho chế độ PvP (2 người chơi cạnh nhau).
+    # Hiển thị hai bảng lưới riêng biệt, thông tin điểm số, combo và phần hướng dẫn phím.
     screen.fill(BG_COLOR)
-    btn_menu = draw_neon_button(screen, "MENU", WIDTH//2 - 50, 10, 100, 35, PINK, mouse_pos)
     pygame.draw.line(screen, (*CYAN, 100), (WIDTH//2, 60), (WIDTH//2, HEIGHT - 20), 2)
 
     c1 = COLOR_MAP.get(pvp_config["p1_color"], CYAN)
     c2 = COLOR_MAP.get(pvp_config["p2_color"], PINK)
 
     def draw_player_side(offset_x, player_name, color, logic, controls_lines, particles_list):
+        # Vẽ riêng một nửa màn hình (trái/phải) cho từng người chơi.
+        # Bao gồm lưới, gạch Hold, gạch Next và trạng thái Thắng/Thua.
         center_x = offset_x + 200
         if offset_x > 200:
             center_x += 40
@@ -222,7 +226,7 @@ def draw_pvp_screen(screen, mouse_pos, pvp_config, logic1, logic2, particles1, p
             overlay = pygame.Surface((board_w, board_h), pygame.SRCALPHA)
             overlay.fill((0, 0, 0, 180))
             screen.blit(overlay, (board_x, board_y))
-            draw_glow_text(screen, "LOSER!", title_font, RED, center_x, board_y + board_h//2)
+            # draw_glow_text(screen, "LOSER!", title_font, RED, center_x, board_y + board_h//2)
 
     if pvp_config["p1_type"] == "human":
         p1_controls = ["[W] ROTA   [A/D] MOVE", "[S] DROP   [Q] HARD   [Z] HOLD"]
@@ -237,12 +241,15 @@ def draw_pvp_screen(screen, mouse_pos, pvp_config, logic1, logic2, particles1, p
     draw_player_side(0, pvp_config["p1_name"], c1, logic1, p1_controls, particles1)
     draw_player_side(400, pvp_config["p2_name"], c2, logic2, p2_controls, particles2)
 
-    buttons = {"menu": btn_menu, "retry": None}
+    buttons = {"menu": None, "retry": None, "pause": None}
 
     if logic1.game_over or logic2.game_over:
         win_text = pvp_config["p2_name"] + " WINS!" if logic1.game_over else pvp_config["p1_name"] + " WINS!"
         draw_glow_text(screen, win_text, title_font, YELLOW, WIDTH//2, HEIGHT//2 - 20)
         btn_w, btn_h = 200, 50
-        buttons["retry"] = draw_neon_button(screen, "RETRY PVP", WIDTH//2 - btn_w//2, HEIGHT//2 + 40, btn_w, btn_h, GREEN, mouse_pos)
+        buttons["retry"] = draw_neon_button(screen, "RETRY PVP", WIDTH//2 - btn_w - 20, HEIGHT//2 + 40, btn_w, btn_h, GREEN, mouse_pos)
+        buttons["menu"] = draw_neon_button(screen, "MENU", WIDTH//2 + 20, HEIGHT//2 + 40, btn_w, btn_h, PINK, mouse_pos)
+    else:
+        buttons["pause"] = draw_neon_button(screen, "PAUSE", WIDTH//2 - 50, 10, 100, 35, PINK, mouse_pos)
 
     return buttons

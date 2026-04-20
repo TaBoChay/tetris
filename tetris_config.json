@@ -22,7 +22,7 @@
   },
   "pvp": {
     "level": "1",
-    "grid": "10x20",
+    "grid": "8x15",
     "ai_diff": "normal",
     "ai_mode": "aggressive",
     "p1_name": "PLAYER 1",

@@ -4,6 +4,7 @@ from settings import *
 from ui import *
 
 def draw_main_menu(screen, mouse_pos):
+    """Vẽ màn hình menu chính với các lựa chọn: Solo, Multiplayer, Config, About, Exit."""
     screen.fill(BG_COLOR)
     for block in floating_blocks: block.update(); block.draw(screen)
     draw_glow_text(screen, "TETRIS", title_font, CYAN, WIDTH//2, 100)
@@ -15,9 +16,12 @@ def draw_main_menu(screen, mouse_pos):
     b_about = draw_neon_button(screen, "ABOUT", start_x, 400, btn_w, btn_h, CYAN, mouse_pos)
     b_exit = draw_neon_button(screen, "EXIT", start_x, 470, btn_w, btn_h, RED, mouse_pos)
     
+    draw_glow_text(screen, "© 1984 Created by Alexey Pajitnov", small_font, GRAY, WIDTH//2, HEIGHT - 30)
+    
     return b_solo, b_multi, b_conf, b_about, b_exit
 
 def draw_about_menu(screen, mouse_pos):
+    """Vẽ màn hình thông tin (About), hướng dẫn luật chơi, cách điều khiển và cách tính điểm."""
     screen.fill(BG_COLOR)
     for block in floating_blocks: block.update(); block.draw(screen)
     
@@ -69,6 +73,7 @@ def draw_about_menu(screen, mouse_pos):
     return btn_back
 
 def draw_solo_menu(screen, mouse_pos):
+    """Vẽ màn hình chọn chế độ chơi đơn (Solo): 40 Lines, Blitz, Custom."""
     screen.fill(BG_COLOR)
     for block in floating_blocks: block.update(); block.draw(screen)
     btn_back = draw_neon_button(screen, "< BACK", 30, 30, 120, 40, PINK, mouse_pos)
@@ -81,6 +86,7 @@ def draw_solo_menu(screen, mouse_pos):
     return btn_back, b_40l, b_blitz, b_custom
 
 def draw_solo_custom_menu(screen, mouse_pos, config):
+    """Vẽ màn hình tuỳ chỉnh cấu hình cho chế độ Solo Custom (Level, Grid, Ghost, Hold)."""
     screen.fill(BG_COLOR)
     for block in floating_blocks: block.update(); block.draw(screen)
     draw_glow_text(screen, "SOLO CUSTOM", title_font, CYAN, WIDTH//2, 50)
@@ -131,6 +137,7 @@ def draw_solo_custom_menu(screen, mouse_pos, config):
     return buttons
 
 def draw_config_menu(screen, mouse_pos, sys_config):
+    """Vẽ màn hình cài đặt hệ thống (Volume, SFX, Brightness)."""
     screen.fill(BG_COLOR)
     for block in floating_blocks: block.update(); block.draw(screen)
     btn_back = draw_neon_button(screen, "< BACK", 30, 30, 120, 40, PINK, mouse_pos)
@@ -179,6 +186,10 @@ def draw_config_menu(screen, mouse_pos, sys_config):
     return btn_back, buttons
 
 def draw_pvp_settings(screen, mouse_pos, config, active_input):
+    """
+    Vẽ màn hình cài đặt cho chế độ PvP (Player vs Player / Player vs AI).
+    Cấu hình bao gồm: Level, Grid, Cài đặt AI (nếu có), Tên, Màu sắc và Phím điều khiển của 2 người chơi.
+    """
     screen.fill(BG_COLOR)
     for block in floating_blocks: block.update(); block.draw(screen)
     draw_glow_text(screen, "PVP SETTINGS", title_font, CYAN, WIDTH//2, 40)
@@ -297,8 +308,10 @@ def draw_pvp_settings(screen, mouse_pos, config, active_input):
     # KEY BINDING BUTTONS - ALIGN WITH PLAYER PANELS
     p1_key_x = p1_x  # Left align with P1 panel
     p2_key_x = p2_x  # Left align with P2 panel (same as P1)
-    buttons["p1_keys"] = draw_neon_button(screen, "P1 KEYS", p1_key_x, 555, 150, 35, GREEN, mouse_pos)
-    buttons["p2_keys"] = draw_neon_button(screen, "P2 KEYS", p2_key_x, 555, 150, 35, PINK, mouse_pos)
+    if config["p1_type"] == "human":
+        buttons["p1_keys"] = draw_neon_button(screen, "P1 KEYS", p1_key_x, 555, 150, 35, GREEN, mouse_pos)
+    if config["p2_type"] == "human":
+        buttons["p2_keys"] = draw_neon_button(screen, "P2 KEYS", p2_key_x, 555, 150, 35, PINK, mouse_pos)
     
     buttons["back"] = draw_neon_button(screen, "< BACK", 120, 610, 220, 50, RED, mouse_pos)
     buttons["start"] = draw_neon_button(screen, "START PVP >", 460, 610, 220, 50, GREEN, mouse_pos)
@@ -306,7 +319,10 @@ def draw_pvp_settings(screen, mouse_pos, config, active_input):
     return buttons
 
 def draw_keyconfig_menu(screen, mouse_pos, mode, config, rebinding_key=None):
-    """Draw key configuration menu for SOLO or PVP mode"""
+    """
+    Vẽ màn hình thiết lập phím điều khiển (Key bindings) cho cả chế độ Solo và PvP.
+    Hiển thị thông báo khi đang chờ người dùng nhập phím mới (rebinding_key).
+    """
     screen.fill(BG_COLOR)
     for block in floating_blocks: block.update(); block.draw(screen)
     
@@ -364,6 +380,10 @@ def draw_keyconfig_menu(screen, mouse_pos, mode, config, rebinding_key=None):
     return buttons
 
 def draw_pause_menu(screen, mouse_pos, sys_config, game_state):
+    """
+    Vẽ màn hình Pause (tạm dừng) hiện đè lên trên game đang chạy.
+    Cho phép thay đổi âm lượng, tuỳ chỉnh phím, tiếp tục chơi hoặc thoát ra menu chính.
+    """
     overlay = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
     overlay.fill((0, 0, 0, 180))
     screen.blit(overlay, (0, 0))

@@ -7,6 +7,7 @@ class Piece:
         self.x = x; self.y = y; self.shape = shape
         self.color = SHAPE_COLORS[shape]; self.rotation = 0
     def get_format(self):
+        """Trả về cấu trúc mảng 2D của viên gạch tại góc xoay hiện tại."""
         return SHAPES[self.shape][self.rotation % len(SHAPES[self.shape])]
 
 class TetrisLogic:
@@ -21,6 +22,8 @@ class TetrisLogic:
         self.ghost_enabled = config.get('ghost', 'on') == 'on'
         self.hold_enabled = config.get('hold', 'on') == 'on'
         
+        self.bag = []
+        
         self.current_piece = self.get_new_piece()
         self.next_piece = self.get_new_piece()
         self.hold_piece = None
@@ -32,9 +35,21 @@ class TetrisLogic:
         self.combo = 0  # Combo counter cho garbage multiplier
 
     def get_new_piece(self):
-        return Piece(self.cols // 2 - 2, 0, random.choice(list(SHAPES.keys())))
+        """
+        Lấy một viên gạch mới từ túi gạch (7-bag algorithm).
+        Nếu túi trống, tạo túi mới gồm 7 loại gạch và xáo trộn.
+        """
+        if not hasattr(self, 'bag') or not self.bag:
+            self.bag = list(SHAPES.keys())
+            random.shuffle(self.bag)
+        shape = self.bag.pop()
+        return Piece(self.cols // 2 - 2, 0, shape)
 
     def valid_space(self, piece):
+        """
+        Kiểm tra xem vị trí hiện tại của viên gạch có hợp lệ không.
+        (Không bị ra ngoài lưới và không bị đè lên các viên gạch đã khoá).
+        """
         format = piece.get_format()
         for i, line in enumerate(format):
             for j, cell in enumerate(line):
@@ -45,6 +60,10 @@ class TetrisLogic:
         return True
 
     def lock_piece(self):
+        """
+        Khoá viên gạch hiện tại vào lưới (khi nó không thể rơi xuống thêm được nữa).
+        Kiểm tra xoá dòng và tự động tạo viên gạch mới. Đánh dấu game_over nếu đầy lưới.
+        """
         format = self.current_piece.get_format()
         for i, line in enumerate(format):
             for j, cell in enumerate(line):
@@ -59,6 +78,10 @@ class TetrisLogic:
         if not self.valid_space(self.current_piece): self.game_over = True
 
     def clear_lines(self):
+        """
+        Xoá các dòng đã được lấp đầy trên lưới.
+        Tính toán điểm số, số dòng đã xoá, hệ số combo và tăng cấp độ (level).
+        """
         lines_cleared = 0
         new_grid = []
         for i in range(self.rows):
@@ -83,14 +106,18 @@ class TetrisLogic:
         self.lines_cleared_this_turn = lines_cleared
 
     def get_and_reset_cleared_lines(self):
+        # """
+        # Lấy số lượng dòng đã xoá trong lượt vừa rồi và tự động reset về 0.
+        # Được sử dụng trong chế độ PvP để tính toán lượng rác sẽ ném sang đối thủ.
+        # """
         res = self.lines_cleared_this_turn
         self.lines_cleared_this_turn = 0
         return res
     
     def get_garbage_amount(self):
-        """Calculate garbage to send with combo multiplier
-        1 line = 1 garbage, but multiplier increases with combo
-        Combo 5+ = 2x garbage"""
+        # """Calculate garbage to send with combo multiplier
+        # 1 line = 1 garbage, but multiplier increases with combo
+        # Combo 5+ = 2x garbage"""
         if self.lines_cleared_this_turn == 0:
             return 0
         garbage = self.lines_cleared_this_turn
@@ -99,6 +126,10 @@ class TetrisLogic:
         return garbage
 
     def add_garbage_lines(self, amount):
+        
+        # Thêm các dòng rác từ dưới đáy lưới lên (nhận rác từ đối thủ).
+        # Dòng rác có màu xám đậm và luôn chừa lại 1 ô trống ngẫu nhiên.
+        
         if amount <= 0 or self.game_over: return
         self.grid = self.grid[amount:] # Đẩy lưới lên
         for _ in range(amount):
@@ -111,6 +142,9 @@ class TetrisLogic:
             self.current_piece.y -= 1
 
     def move(self, dx, dy):
+        # Di chuyển viên gạch theo trục x (ngang) và y (dọc).
+        # Nếu di chuyển xuống (dy > 0) mà bị kẹt thì sẽ tự động khoá viên gạch.
+        # Trả về True nếu di chuyển thành công, False nếu bị chặn.
         if self.game_over: return False
         self.current_piece.x += dx
         self.current_piece.y += dy
@@ -121,15 +155,38 @@ class TetrisLogic:
         return True
 
     def rotate(self):
+        # Xoay viên gạch theo chiều kim đồng hồ.
+        # Nếu vị trí sau khi xoay bị chặn, thử dịch chuyển sang trái/phải/lên (Wall Kick).
+        # Nếu vẫn không được, sẽ huỷ việc xoay.
         if self.game_over: return
         self.current_piece.rotation += 1
-        if not self.valid_space(self.current_piece): self.current_piece.rotation -= 1 
+        if self.valid_space(self.current_piece):
+            return
+            
+        # Wall kick logic (try shifting left, right, up, double left, double right)
+        kick_offsets = [(-1, 0), (1, 0), (0, -1), (-2, 0), (2, 0), (-1, -1), (1, -1)]
+        for dx, dy in kick_offsets:
+            self.current_piece.x += dx
+            self.current_piece.y += dy
+            if self.valid_space(self.current_piece):
+                return
+            # Revert shift if invalid
+            self.current_piece.x -= dx
+            self.current_piece.y -= dy
+            
+        # Revert rotation if all kicks fail
+        self.current_piece.rotation -= 1
 
     def hard_drop(self):
+        # Cho viên gạch rơi thẳng lập tức xuống vị trí thấp nhất có thể.
         if self.game_over: return
         while self.move(0, 1): pass 
 
     def swap_hold(self):
+        """
+        Đổi viên gạch hiện tại với viên gạch đang được giữ (Hold).
+        Mỗi lượt rơi chỉ được phép sử dụng chức năng Hold một lần.
+        """
         if self.game_over or not self.hold_enabled or not self.can_hold: return
         if self.hold_piece is None:
             self.hold_piece = Piece(self.cols // 2 - 2, 0, self.current_piece.shape)
@@ -142,6 +199,8 @@ class TetrisLogic:
         self.can_hold = False 
 
     def get_ghost_piece(self):
+        # Tính toán và trả về vị trí ảnh ảo (Ghost Piece) của viên gạch hiện tại.
+        # Ảnh ảo hiển thị nơi viên gạch sẽ rơi xuống nếu thực hiện thả mạnh (hard drop).
         if not self.ghost_enabled or self.game_over: return None
         ghost = Piece(self.current_piece.x, self.current_piece.y, self.current_piece.shape)
         ghost.rotation = self.current_piece.rotation

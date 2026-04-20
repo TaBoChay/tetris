@@ -27,6 +27,8 @@ class TetrisAI:
         self.state = "THINK" 
 
     def update(self, logic, dt):
+        # Hàm cập nhật logic của AI theo thời gian (delta time).
+        # Trạng thái của AI xoay vòng qua: THINK (Tính toán) -> MOVE (Di chuyển) -> DROP (Thả rơi).
         if logic.game_over: return
         
         if id(logic.current_piece) != self.current_piece_id:
@@ -56,6 +58,8 @@ class TetrisAI:
                     pass 
 
     def execute_move_step(self, logic):
+        # Thực hiện từng bước di chuyển (xoay, sang trái/phải, hold) để đưa viên gạch
+        # tới vị trí và góc xoay mục tiêu (target_x, target_r) mà AI đã tính toán.
         if self.should_hold and logic.can_hold:
             logic.swap_hold()
             self.should_hold = False
@@ -74,6 +78,9 @@ class TetrisAI:
             self.state = "DROP" 
 
     def calculate_best_move(self, logic):
+        # Tính toán nước đi tốt nhất hiện tại.
+        # Kiểm tra điểm số nếu dùng khối hiện tại và kiểm tra cả điểm số nếu dùng khối Hold.
+        # Quyết định xem có nên Hold hay không, và lưu target_x, target_r.
         best_score = -999999
         best_x = logic.current_piece.x
         best_r = logic.current_piece.rotation
@@ -94,6 +101,8 @@ class TetrisAI:
         self.should_hold = best_hold
 
     def get_best_for_piece(self, logic, piece):
+        # Duyệt qua tất cả các góc xoay và vị trí X có thể thả của một viên gạch.
+        # Trả về điểm số cao nhất cùng với tọa độ X và góc xoay đó.
         best_score = -999999
         best_x = piece.x
         best_r = piece.rotation
@@ -106,6 +115,8 @@ class TetrisAI:
         return best_score, best_x, best_r
 
     def simulate_drop(self, logic, piece, x, r):
+        # Giả lập thả rơi một viên gạch tại vị trí x và góc xoay r trên một lưới tạm thời.
+        # Trả về điểm số đánh giá độ tốt/xấu của lưới sau khi thả.
         dummy_y = piece.y
         shape_format = SHAPES[piece.shape][r % len(SHAPES[piece.shape])]
         
@@ -143,6 +154,12 @@ class TetrisAI:
         return self.evaluate_grid(new_grid, logic.cols, logic.rows, lines_cleared)
 
     def evaluate_grid(self, grid, cols, rows, lines_cleared):
+        # Đánh giá độ "đẹp" của lưới game dựa trên 4 yếu tố:
+        # - agg_height: Tổng chiều cao của các cột (càng thấp càng tốt).
+        # - lines_cleared: Số dòng ăn được (càng nhiều càng tốt).
+        # - holes: Số lỗ hổng bị chặn phía trên (càng ít càng tốt).
+        # - bumpiness: Độ nhấp nhô giữa các cột kề nhau (càng ít càng tốt).
+        # Trọng số (weights) thay đổi tùy theo chế độ tính cách của AI (ai_mode).
         heights = [0] * cols
         holes = 0
 

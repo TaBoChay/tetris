@@ -18,6 +18,7 @@ except:
     tiny_font = pygame.font.SysFont("Courier", 10)
 
 def draw_shape_preview(surface, shape_key, x, y, block_size=15):
+    # """Vẽ xem trước hình dáng của một khối gạch (vd: trong ô Next hoặc Hold)."""
     if not shape_key: return
     shape_matrix = SHAPES[shape_key][0]
     color = SHAPE_COLORS[shape_key]
@@ -31,6 +32,7 @@ def draw_shape_preview(surface, shape_key, x, y, block_size=15):
 
 # --- CLASS HIỆU ỨNG VỤN VỠ (PARTICLE) ---
 class Particle:
+    # """Lớp tạo hiệu ứng hạt (khi xoá dòng)."""
     def __init__(self, x, y, color):
         self.x = x
         self.y = y
@@ -54,6 +56,7 @@ class Particle:
             surface.blit(s, (self.x, self.y))
 
 class FloatingBlock:
+    # """Lớp tạo các khối gạch bay lơ lửng ngẫu nhiên làm hình nền cho menu."""
     def __init__(self):
         self.x = random.randint(0, WIDTH)
         self.y = random.randint(-100, HEIGHT)
@@ -77,6 +80,7 @@ class FloatingBlock:
 floating_blocks = [FloatingBlock() for _ in range(15)]
 
 def render_bold_text(surface, text, font, color, center_x, center_y, align="center"):
+    # """Vẽ văn bản in đậm (bằng cách vẽ đè 2 lớp cạnh nhau)."""
     text_surf = font.render(text, False, color)
     if align == "center": rect = text_surf.get_rect(center=(center_x, center_y))
     else: rect = text_surf.get_rect(midleft=(center_x, center_y))
@@ -84,6 +88,7 @@ def render_bold_text(surface, text, font, color, center_x, center_y, align="cent
     surface.blit(text_surf, (rect.x + 1, rect.y)) 
 
 def draw_neon_button(surface, text, x, y, w, h, neon_color, mouse_pos):
+    # """Vẽ một nút bấm cơ bản với hiệu ứng phát sáng neon khi di chuột qua (hover)."""
     rect = pygame.Rect(x, y, w, h)
     is_hover = rect.collidepoint(mouse_pos)
     border_thickness = 3 if is_hover else 2
@@ -106,6 +111,7 @@ def draw_neon_button(surface, text, x, y, w, h, neon_color, mouse_pos):
     return rect
 
 def draw_toggle_button(surface, text, x, y, w, h, neon_color, mouse_pos, is_active):
+    # """Vẽ nút bấm dạng Bật/Tắt (Toggle), có trạng thái được chọn (is_active)."""
     rect = pygame.Rect(x, y, w, h)
     is_hover = rect.collidepoint(mouse_pos)
     border_thickness = 3 if is_hover or is_active else 1
@@ -128,6 +134,7 @@ def draw_toggle_button(surface, text, x, y, w, h, neon_color, mouse_pos, is_acti
     return rect
 
 def draw_slider(surface, x, y, w, h, min_val, max_val, current_val, track_color, thumb_color, mouse_pos):
+    # """Vẽ thanh trượt điều chỉnh giá trị (vd: thanh âm lượng)."""
      track_rect = pygame.Rect(x, y, w, h)
      is_hover = track_rect.collidepoint(mouse_pos)
      
@@ -157,6 +164,7 @@ def draw_slider(surface, x, y, w, h, min_val, max_val, current_val, track_color,
      return track_rect, thumb_rect
 
 def draw_glow_text(surface, text, font, color, center_x, center_y, align="center"):
+    # """Vẽ văn bản với hiệu ứng phát sáng (shadow/glow) phía sau."""
      if font == title_font:
          shadow_surf = font.render(text, False, (0, 100, 100))
          if align == "center": shadow_rect = shadow_surf.get_rect(center=(center_x + 4, center_y + 4))
