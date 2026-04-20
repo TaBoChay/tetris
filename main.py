@@ -148,8 +148,8 @@ def main():
                         das_charged = True
                         das_arr_timer = 0
                     if das_charged:
-                        # ARR = half fall speed, min 33ms (smooth at high levels)
-                        arr = max(33, solo_logic.get_fall_speed() // 2)
+                        # ARR: t\u1ed1i \u0111a 50ms (b\u1eb1ng t\u1ed1c \u0111\u1ed9 c\u0169), nhanh h\u01a1n \u1edf level cao (min 33ms)
+                        arr = min(50, max(33, solo_logic.get_fall_speed() // 2))
                         das_arr_timer += dt
                         while das_arr_timer >= arr:
                             das_arr_timer -= arr
