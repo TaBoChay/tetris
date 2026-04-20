@@ -198,8 +198,29 @@ KEY_DISPLAY.update({
 
 def get_key_constant(key_name):
     """Convert string key name to pygame constant"""
-    return KEY_MAP.get(key_name.lower(), pygame.K_LEFT)
+    key_lower = key_name.lower()
+    if key_lower in KEY_MAP:
+        return KEY_MAP[key_lower]
+    
+    # Try pygame.key.key_code if available
+    try:
+        return pygame.key.key_code(key_lower)
+    except:
+        pass
+        
+    return pygame.K_UNKNOWN if hasattr(pygame, 'K_UNKNOWN') else 0
 
 def get_key_display_name(key_constant):
     """Convert pygame constant to display name"""
-    return KEY_DISPLAY.get(key_constant, "UNKNOWN")
+    if key_constant in KEY_DISPLAY:
+        return KEY_DISPLAY[key_constant]
+        
+    # Try pygame.key.name
+    try:
+        name = pygame.key.name(key_constant)
+        if name and name != "unknown key":
+            return name.upper()
+    except:
+        pass
+        
+    return "UNKNOWN"

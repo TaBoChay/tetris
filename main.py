@@ -159,16 +159,25 @@ def main():
 
             # Handle key rebinding
             if current_state == "KEYCONFIG_MENU" and event.type == pygame.KEYDOWN and rebinding_key_action:
-                new_key_name = get_key_display_name(event.key).lower()
-                if rebinding_key_mode == "solo":
-                    solo_config.setdefault("keys", DEFAULT_SOLO_KEYS.copy())[rebinding_key_action] = new_key_name
-                elif rebinding_key_mode == "pvp_p1":
-                    pvp_config.setdefault("p1_keys", DEFAULT_PVP_P1_KEYS.copy())[rebinding_key_action] = new_key_name
-                elif rebinding_key_mode == "pvp_p2":
-                    pvp_config.setdefault("p2_keys", DEFAULT_PVP_P2_KEYS.copy())[rebinding_key_action] = new_key_name
-                rebinding_key_action = None
-                config_dirty = True
-                play_sfx("button")
+                if event.key == pygame.K_ESCAPE:
+                    rebinding_key_action = None
+                    play_sfx("button")
+                else:
+                    new_key_name = get_key_display_name(event.key).lower()
+                    if new_key_name == "unknown" and event.unicode and event.unicode.isprintable() and len(event.unicode.strip()) > 0:
+                        new_key_name = event.unicode.lower()
+                        
+                    if new_key_name != "unknown":
+                        if rebinding_key_mode == "solo":
+                            solo_config.setdefault("keys", DEFAULT_SOLO_KEYS.copy())[rebinding_key_action] = new_key_name
+                        elif rebinding_key_mode == "pvp_p1":
+                            pvp_config.setdefault("p1_keys", DEFAULT_PVP_P1_KEYS.copy())[rebinding_key_action] = new_key_name
+                        elif rebinding_key_mode == "pvp_p2":
+                            pvp_config.setdefault("p2_keys", DEFAULT_PVP_P2_KEYS.copy())[rebinding_key_action] = new_key_name
+                        config_dirty = True
+                        
+                    rebinding_key_action = None
+                    play_sfx("button")
 
             if current_state == "SOLO_GAME" and solo_logic and not solo_logic.game_over and not is_paused:
                 if event.type == pygame.KEYDOWN:
@@ -314,11 +323,11 @@ def main():
                         btns = {}
                         # Back button position
                         btns["back"] = pygame.Rect(WIDTH//2 - 100, 620, 200, 50)
-                        # Key action buttons (2 columns, 3 rows)
+                        
+                        panel_w = 700
+                        panel_x = (WIDTH - panel_w) // 2
                         for i, action in enumerate(key_actions):
-                            col = i // 3
-                            row = i % 3
-                            btns[action] = pygame.Rect(100 + col*280, key_y + row*50 - 12, 350, 35)
+                            btns[action] = pygame.Rect(panel_x + 280, key_y + i*50 - 12, 350, 35)
                         
                         if "back" in btns and btns["back"].collidepoint(mouse_pos):
                             rebinding_key_action = None
@@ -430,13 +439,13 @@ def main():
                                         pvp_config["ai_mode"] = key
                                         config_dirty = True
                             # Key binding buttons
-                            if btns["p1_keys"].collidepoint(mouse_pos):
+                            if "p1_keys" in btns and btns["p1_keys"].collidepoint(mouse_pos):
                                 current_state = "KEYCONFIG_MENU"
                                 rebinding_key_mode = "pvp_p1"
                                 rebinding_key_action = None
                                 rebinding_key_from = "pvp_settings"
                                 play_sfx("button")
-                            elif btns["p2_keys"].collidepoint(mouse_pos):
+                            elif "p2_keys" in btns and btns["p2_keys"].collidepoint(mouse_pos):
                                 current_state = "KEYCONFIG_MENU"
                                 rebinding_key_mode = "pvp_p2"
                                 rebinding_key_action = None

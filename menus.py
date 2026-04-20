@@ -297,8 +297,10 @@ def draw_pvp_settings(screen, mouse_pos, config, active_input):
     # KEY BINDING BUTTONS - ALIGN WITH PLAYER PANELS
     p1_key_x = p1_x  # Left align with P1 panel
     p2_key_x = p2_x  # Left align with P2 panel (same as P1)
-    buttons["p1_keys"] = draw_neon_button(screen, "P1 KEYS", p1_key_x, 555, 150, 35, GREEN, mouse_pos)
-    buttons["p2_keys"] = draw_neon_button(screen, "P2 KEYS", p2_key_x, 555, 150, 35, PINK, mouse_pos)
+    if config["p1_type"] == "human":
+        buttons["p1_keys"] = draw_neon_button(screen, "P1 KEYS", p1_key_x, 555, 150, 35, GREEN, mouse_pos)
+    if config["p2_type"] == "human":
+        buttons["p2_keys"] = draw_neon_button(screen, "P2 KEYS", p2_key_x, 555, 150, 35, PINK, mouse_pos)
     
     buttons["back"] = draw_neon_button(screen, "< BACK", 120, 610, 220, 50, RED, mouse_pos)
     buttons["start"] = draw_neon_button(screen, "START PVP >", 460, 610, 220, 50, GREEN, mouse_pos)
