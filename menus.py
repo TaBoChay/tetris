@@ -186,8 +186,8 @@ def draw_config_menu(screen, mouse_pos, sys_config):
     return btn_back, buttons
 
 def draw_ai_mode_tooltip(screen, mouse_pos):
-    tooltip_w = 420
-    tooltip_h = 420
+    tooltip_w = 460
+    tooltip_h = 320
     tt_x = mouse_pos[0] + 15
     tt_y = mouse_pos[1] + 15
     if tt_x + tooltip_w > WIDTH:
@@ -199,46 +199,31 @@ def draw_ai_mode_tooltip(screen, mouse_pos):
     pygame.draw.rect(tt_surf, (20, 20, 20, 240), tt_surf.get_rect(), border_radius=8)
     screen.blit(tt_surf, (tt_x, tt_y))
     pygame.draw.rect(screen, CYAN, (tt_x, tt_y, tooltip_w, tooltip_h), 2, border_radius=8)
-    
-    try:
-        font = pygame.font.SysFont("Arial", 13)
-        font_bold = pygame.font.SysFont("Arial", 14, bold=True)
-        title_font_sys = pygame.font.SysFont("Arial", 15, bold=True)
-    except:
-        font = small_font
-        font_bold = small_font
-        title_font_sys = main_font
         
     lines = [
-        ("3 Implemented AI Modes:", title_font_sys, YELLOW),
-        ("", font, WHITE),
-        ("BALANCED", font_bold, CYAN),
-        ("Weights: height=-0.51, lines=0.76, holes=-0.36, bumpiness=-0.18", font, WHITE),
-        ("Mindset: Balanced, safe & effective", font, WHITE),
-        ("- Both offensive and defensive", font, WHITE),
-        ("- Not too risky", font, WHITE),
-        ("- Easy to play vs average players", font, WHITE),
-        ("", font, WHITE),
-        ("AGGRESSIVE", font_bold, ORANGE),
-        ("Weights: height=-0.4, lines=1.2, holes=-0.2, bumpiness=-0.1", font, WHITE),
-        ("Mindset: Clear lines at all costs to send garbage", font, WHITE),
-        ("- Prioritize clear lines (1.2x weight)", font, WHITE),
-        ("- Ignore holes -> very aggressive", font, WHITE),
-        ("- Ignore bumpiness -> fearless", font, WHITE),
-        ("- Spam garbage, make opponent uncomfortable", font, WHITE),
-        ("", font, WHITE),
-        ("DEFENSIVE", font_bold, BLUE),
-        ("Weights: height=-0.8, lines=0.5, holes=-0.8, bumpiness=-0.3", font, WHITE),
-        ("Mindset: Play safe, avoid losing", font, WHITE),
-        ("- Prioritize survival: height -0.8", font, WHITE),
-        ("- Avoid holes: holes -0.8", font, WHITE),
-        ("- Avoid bumpiness: bumpiness -0.3", font, WHITE),
-        ("- Stay defensive on standby", font, WHITE),
+        ("1. BALANCED", small_font, CYAN),
+        ("Style: Safe & Steady.", tiny_font, WHITE),
+        ("Info: Balances attack and defense.", tiny_font, WHITE),
+        ("      Rarely makes mistakes.", tiny_font, WHITE),
+        ("Tip: Great for warm-ups.", tiny_font, WHITE),
+        ("", tiny_font, WHITE),
+        ("2. AGGRESSIVE", small_font, ORANGE),
+        ("Style: High Pressure!", tiny_font, WHITE),
+        ("Info: Spams garbage lines at all costs,", tiny_font, WHITE),
+        ("      ignoring its own board.", tiny_font, WHITE),
+        ("Tip: Don't build high. Clear lines fast!", tiny_font, WHITE),
+        ("", tiny_font, WHITE),
+        ("3. DEFENSIVE", small_font, BLUE),
+        ("Style: Survival Focus.", tiny_font, WHITE),
+        ("Info: Keeps board low, plays safe,", tiny_font, WHITE),
+        ("      and waits for your mistakes.", tiny_font, WHITE),
+        ("Tip: Take time to set up massive", tiny_font, WHITE),
+        ("      combos to break its defense.", tiny_font, WHITE),
     ]
     
     y_offset = tt_y + 15
     for text, f, color in lines:
-        text_surf = f.render(text, True, color)
+        text_surf = f.render(text, False, color)
         screen.blit(text_surf, (tt_x + 15, y_offset))
         y_offset += text_surf.get_height() + 4
 
