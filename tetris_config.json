@@ -1,13 +1,13 @@
 {
   "sys": {
-    "volume": 24,
-    "sfx": "on",
+    "volume": 61,
+    "sfx": "off",
     "music": "on",
     "brightness": "normal"
   },
   "solo": {
     "level": "1",
-    "grid": "10x20",
+    "grid": "12x25",
     "ghost": "on",
     "hold": "on",
     "level_up": "on",
@@ -23,10 +23,10 @@
   "pvp": {
     "level": "1",
     "grid": "8x15",
-    "ai_diff": "normal",
-    "ai_mode": "aggressive",
+    "ai_diff": "easy",
+    "ai_mode": "balanced",
     "p1_name": "PLAYER 1",
-    "p1_color": "cyan",
+    "p1_color": "gold",
     "p1_type": "human",
     "p2_name": "AI",
     "p2_color": "pink",
