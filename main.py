@@ -29,7 +29,8 @@ VOL_SLIDER_TRACK_H = 12
 pygame.init()
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Tetris Cyberpunk Edition")
-pygame.key.set_repeat(200, 50)
+# Không dùng pygame.key.set_repeat vì tự xử lý DAS (Delayed Auto Shift)
+# để tốc độ di chuyển ngang tỉ lệ với tốc độ rơi theo level
 
 def main():
     """
@@ -43,6 +44,19 @@ def main():
     volume_dragging = None
     keys_held = set()
     is_paused = False
+
+    # --- DAS (Delayed Auto Shift) state ---
+    # DAS delay: 10 frames @ 60fps = 167ms (Tetris standard)
+    DAS_DELAY = 167
+    # ARR (Auto Repeat Rate) theo level: được tính lại mỗi khi cần
+    das_key = None          # phím đang được giữ (move_left / move_right)
+    das_timer = 0           # thời gian đã giữ (ms)
+    das_arr_timer = 0       # timer cho ARR lặp lại
+    das_charged = False     # đã qua DAS delay chưa
+    # Soft drop (move_down) - giữ phím để rơi nhanh
+    das_down_held = False   # đang giữ phím xuống
+    das_down_timer = 0      # timer cho soft drop lặp
+    DAS_DOWN_INTERVAL = 50  # ms giữa mỗi bước xuống (20 bước/giây)
 
     config_data = load_user_config()
     sys_config = config_data["sys"]
@@ -122,6 +136,41 @@ def main():
                     p.update()
                     if p.alpha <= 0: particles.remove(p)
 
+            # --- DAS update cho Solo Game ---
+            if not solo_logic.game_over and not is_paused and das_key:
+                keys = solo_config.get("keys", DEFAULT_SOLO_KEYS)
+                left_key  = get_key_constant(keys.get("move_left",  "left"))
+                right_key = get_key_constant(keys.get("move_right", "right"))
+                if (das_key == "left"  and left_key  in keys_held) or \
+                   (das_key == "right" and right_key in keys_held):
+                    das_timer += dt
+                    if not das_charged and das_timer >= DAS_DELAY:
+                        das_charged = True
+                        das_arr_timer = 0
+                    if das_charged:
+                        # ARR = half fall speed, min 33ms (smooth at high levels)
+                        arr = max(33, solo_logic.get_fall_speed() // 2)
+                        das_arr_timer += dt
+                        while das_arr_timer >= arr:
+                            das_arr_timer -= arr
+                            dx = -1 if das_key == "left" else 1
+                            solo_logic.move(dx, 0)
+                            play_sfx("move")
+                else:
+                    das_key = None; das_timer = 0; das_charged = False; das_arr_timer = 0
+
+            # --- Soft drop DAS cho Solo Game ---
+            if not solo_logic.game_over and not is_paused and das_down_held:
+                keys = solo_config.get("keys", DEFAULT_SOLO_KEYS)
+                down_key = get_key_constant(keys.get("move_down", "down"))
+                if down_key in keys_held:
+                    das_down_timer += dt
+                    while das_down_timer >= DAS_DOWN_INTERVAL:
+                        das_down_timer -= DAS_DOWN_INTERVAL
+                        solo_logic.move(0, 1); fall_time = 0
+                else:
+                    das_down_held = False; das_down_timer = 0
+
         elif current_state == "PVP_GAME" and p1_logic and p2_logic:
             if not is_paused:
                 game_ended = p1_logic.game_over or p2_logic.game_over
@@ -163,6 +212,10 @@ def main():
                 if not is_repeat and event.key in (pygame.K_ESCAPE, pygame.K_p):
                     if current_state in ("SOLO_GAME", "PVP_GAME"):
                         is_paused = not is_paused
+                        # Reset DAS khi pause
+                        if is_paused:
+                            das_key = None; das_timer = 0; das_charged = False; das_arr_timer = 0
+                            das_down_held = False; das_down_timer = 0
                         play_sfx("button")
             elif event.type == pygame.KEYUP:
                 keys_held.discard(event.key)
@@ -193,29 +246,37 @@ def main():
                     play_sfx("button")
 
             if current_state == "SOLO_GAME" and solo_logic and not solo_logic.game_over and not is_paused:
-                if event.type == pygame.KEYDOWN:
+                if event.type == pygame.KEYDOWN and not is_repeat:
                     keys = solo_config.get("keys", DEFAULT_SOLO_KEYS)
                     if key_matches(event.key, "move_left", keys):
+                        # Lần đầu nhấn: di chuyển ngay + bắt đầu DAS
                         solo_logic.move(-1, 0)
                         play_sfx("move")
+                        das_key = "left"; das_timer = 0; das_charged = False; das_arr_timer = 0
                     elif key_matches(event.key, "move_right", keys):
                         solo_logic.move(1, 0)
                         play_sfx("move")
+                        das_key = "right"; das_timer = 0; das_charged = False; das_arr_timer = 0
                     elif key_matches(event.key, "move_down", keys):
                         solo_logic.move(0, 1); fall_time = 0
                         play_sfx("move")
+                        das_down_held = True; das_down_timer = 0
                     elif key_matches(event.key, "rotate", keys):
-                        if not is_repeat:
-                            solo_logic.rotate()
-                            play_sfx("rotate")
+                        solo_logic.rotate()
+                        play_sfx("rotate")
                     elif key_matches(event.key, "hard_drop", keys):
-                        if not is_repeat:
-                            solo_logic.hard_drop(); fall_time = 0
-                            play_sfx("hard_drop")
+                        solo_logic.hard_drop(); fall_time = 0
+                        play_sfx("hard_drop")
                     elif key_matches(event.key, "hold", keys):
-                        if not is_repeat:
-                            solo_logic.swap_hold()
-                            play_sfx("hold")
+                        solo_logic.swap_hold()
+                        play_sfx("hold")
+                elif event.type == pygame.KEYUP:
+                    keys = solo_config.get("keys", DEFAULT_SOLO_KEYS)
+                    if (key_matches(event.key, "move_left", keys) and das_key == "left") or \
+                       (key_matches(event.key, "move_right", keys) and das_key == "right"):
+                        das_key = None; das_timer = 0; das_charged = False; das_arr_timer = 0
+                    elif key_matches(event.key, "move_down", keys):
+                        das_down_held = False; das_down_timer = 0
 
             elif current_state == "PVP_GAME" and not p1_logic.game_over and not p2_logic.game_over and not is_paused:
                 if event.type == pygame.KEYDOWN:
@@ -344,8 +405,7 @@ def main():
                         
                         if "back" in btns and btns["back"].collidepoint(mouse_pos):
                             rebinding_key_action = None
-                            rebinding_key_mode = None
-                            # Map return state correctly
+                            # Bug fix: đọc rebinding_key_from TRƯỚC khi set None
                             state_map = {
                                 "config": "CONFIG_MENU",
                                 "pvp_settings": "PVP_SETTINGS",
@@ -353,7 +413,11 @@ def main():
                                 "pause_pvp": "PVP_GAME"
                             }
                             ret_state = state_map.get(rebinding_key_from, "CONFIG_MENU")
+                            # Bug fix: restore is_paused khi quay về game đang pause
+                            if rebinding_key_from in ("pause_solo", "pause_pvp"):
+                                is_paused = True
                             rebinding_key_from = None
+                            rebinding_key_mode = None
                             current_state = ret_state
                             active_input = None
                             config_dirty = True
@@ -482,6 +546,10 @@ def main():
                         is_paused = False
                         current_state = "MAIN_MENU"
                         play_sfx("button")
+                    elif btns.get("mode_select") and btns["mode_select"].collidepoint(mouse_pos):
+                        is_paused = False
+                        current_state = "SOLO_MENU" if current_state == "SOLO_GAME" else "PVP_SETTINGS"
+                        play_sfx("button")
                     elif btns["keys_solo"] and btns["keys_solo"].collidepoint(mouse_pos):
                         current_state = "KEYCONFIG_MENU"
                         rebinding_key_mode = "solo"
@@ -512,10 +580,15 @@ def main():
                             set_master_volume(new_vol)
                             
                 elif current_state == "SOLO_GAME" and not is_paused:
-                    btns = draw_play_screen_solo(screen, mouse_pos, solo_logic, particles, game_mode, blitz_time)
+                    btns = draw_play_screen_solo(screen, mouse_pos, solo_logic, particles, game_mode, blitz_time,
+                                                  keys_config=solo_config.get("keys", DEFAULT_SOLO_KEYS))
                     if btns["menu"] and btns["menu"].collidepoint(mouse_pos):
                         game_mode = None
                         current_state = "MAIN_MENU"
+                        play_sfx("button")
+                    elif btns.get("mode_select") and btns["mode_select"].collidepoint(mouse_pos):
+                        game_mode = None
+                        current_state = "SOLO_MENU"
                         play_sfx("button")
                     elif btns.get("pause") and btns["pause"].collidepoint(mouse_pos):
                         is_paused = True
@@ -535,12 +608,20 @@ def main():
                             cfg = solo_config
                         solo_logic = TetrisLogic(cfg)
                         fall_time = 0; particles.clear()
+                        solo_clear_played = False
+                        solo_game_over_sounded = False  # Bug fix: reset sound flag khi retry
                         if game_mode == "BLITZ": blitz_time = 120000
+                        elif game_mode == "40L": blitz_time = 0
 
                 elif current_state == "PVP_GAME" and not is_paused:
-                    btns = draw_pvp_screen(screen, mouse_pos, pvp_config, p1_logic, p2_logic, p1_particles, p2_particles)
+                    btns = draw_pvp_screen(screen, mouse_pos, pvp_config, p1_logic, p2_logic, p1_particles, p2_particles,
+                                           p1_keys=pvp_config.get("p1_keys", DEFAULT_PVP_P1_KEYS),
+                                           p2_keys=pvp_config.get("p2_keys", DEFAULT_PVP_P2_KEYS))
                     if btns["menu"] and btns["menu"].collidepoint(mouse_pos): 
                         current_state = "MAIN_MENU"
+                        play_sfx("button")
+                    elif btns.get("mode_select") and btns["mode_select"].collidepoint(mouse_pos):
+                        current_state = "PVP_SETTINGS"
                         play_sfx("button")
                     elif btns.get("pause") and btns["pause"].collidepoint(mouse_pos):
                         is_paused = True
@@ -548,8 +629,14 @@ def main():
                     elif btns["retry"] and btns["retry"].collidepoint(mouse_pos):
                         p1_logic = TetrisLogic(pvp_config)
                         p2_logic = TetrisLogic(pvp_config)
+                        # Bug fix: reset AI instances để tránh giữ state cũ từ ván trước
+                        p1_ai = TetrisAI(pvp_config["ai_diff"], pvp_config["ai_mode"]) if pvp_config["p1_type"] == "ai" else None
+                        p2_ai = TetrisAI(pvp_config["ai_diff"], pvp_config["ai_mode"]) if pvp_config["p2_type"] == "ai" else None
                         p1_fall_time = 0; p2_fall_time = 0
                         p1_particles.clear(); p2_particles.clear()
+                        # Bug fix: reset sound flags khi retry
+                        p1_game_over_sounded = False
+                        p2_game_over_sounded = False
 
             if event.type == pygame.MOUSEMOTION:
                 if volume_dragging is not None:
@@ -579,8 +666,11 @@ def main():
         elif current_state == "SOLO_MENU": draw_solo_menu(screen, mouse_pos)
         elif current_state == "SOLO_CUSTOM_MENU": draw_solo_custom_menu(screen, mouse_pos, solo_config)
         elif current_state == "PVP_SETTINGS": draw_pvp_settings(screen, mouse_pos, pvp_config, active_input)
-        elif current_state == "SOLO_GAME": draw_play_screen_solo(screen, mouse_pos, solo_logic, particles, game_mode, blitz_time)
-        elif current_state == "PVP_GAME": draw_pvp_screen(screen, mouse_pos, pvp_config, p1_logic, p2_logic, p1_particles, p2_particles)
+        elif current_state == "SOLO_GAME": draw_play_screen_solo(screen, mouse_pos, solo_logic, particles, game_mode, blitz_time,
+                                                                    keys_config=solo_config.get("keys", DEFAULT_SOLO_KEYS))
+        elif current_state == "PVP_GAME": draw_pvp_screen(screen, mouse_pos, pvp_config, p1_logic, p2_logic, p1_particles, p2_particles,
+                                                          p1_keys=pvp_config.get("p1_keys", DEFAULT_PVP_P1_KEYS),
+                                                          p2_keys=pvp_config.get("p2_keys", DEFAULT_PVP_P2_KEYS))
 
         if current_state in ("SOLO_GAME", "PVP_GAME") and is_paused:
             draw_pause_menu(screen, mouse_pos, sys_config, current_state)

@@ -3,7 +3,12 @@ import pygame
 from settings import *
 from ui import *
 
-def draw_play_screen_solo(screen, mouse_pos, logic, particles, game_mode=None, blitz_time=0):
+def _key_label(keys_config, action, fallback="?"):
+    """Trả về tên hiển thị của phím được bind cho action."""
+    key_name = keys_config.get(action, fallback)
+    return get_key_display_name(get_key_constant(key_name))
+
+def draw_play_screen_solo(screen, mouse_pos, logic, particles, game_mode=None, blitz_time=0, keys_config=None):
     # Vẽ màn hình chơi game
     screen.fill(BG_COLOR)
     if game_mode == "40L":
@@ -67,8 +72,21 @@ def draw_play_screen_solo(screen, mouse_pos, logic, particles, game_mode=None, b
         p.draw(screen)
 
     ctrl_y = board_y + board_h + 20
-    draw_glow_text(screen, "[UP] ROTATE   [L/R] MOVE   [DOWN] DROP", small_font, CYAN, WIDTH//2, ctrl_y, align="center")
-    draw_glow_text(screen, "[SPACE] HARD DROP   [Z] HOLD", small_font, YELLOW, WIDTH//2, ctrl_y + 22, align="center")
+    if keys_config:
+        k = keys_config
+        rot   = _key_label(k, "rotate")
+        left  = _key_label(k, "move_left")
+        right = _key_label(k, "move_right")
+        down  = _key_label(k, "move_down")
+        hard  = _key_label(k, "hard_drop")
+        hold  = _key_label(k, "hold")
+        line1 = f"[{rot}] ROTATE   [{left}/{right}] MOVE   [{down}] DROP"
+        line2 = f"[{hard}] HARD DROP   [{hold}] HOLD"
+    else:
+        line1 = "[UP] ROTATE   [L/R] MOVE   [DOWN] DROP"
+        line2 = "[SPACE] HARD DROP   [Z] HOLD"
+    draw_glow_text(screen, line1, small_font, CYAN, WIDTH//2, ctrl_y, align="center")
+    draw_glow_text(screen, line2, small_font, YELLOW, WIDTH//2, ctrl_y + 22, align="center")
 
     left_x = 60
     if logic.hold_enabled:
@@ -110,7 +128,7 @@ def draw_play_screen_solo(screen, mouse_pos, logic, particles, game_mode=None, b
     status_color = RED if logic.game_over else WHITE
     draw_glow_text(screen, status_text, main_font, status_color, right_x, 285, align="left")
 
-    buttons = {"menu": None, "retry": None, "pause": None}
+    buttons = {"menu": None, "retry": None, "pause": None, "mode_select": None}
 
     if logic.game_over:
         overlay = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
@@ -118,28 +136,31 @@ def draw_play_screen_solo(screen, mouse_pos, logic, particles, game_mode=None, b
         screen.blit(overlay, (0, 0))
 
         if game_mode == "BLITZ" and blitz_time <= 0:
-            draw_glow_text(screen, "TIME'S UP!", title_font, YELLOW, WIDTH//2, HEIGHT//2 - 100)
+            draw_glow_text(screen, "TIME'S UP!", title_font, YELLOW, WIDTH//2, HEIGHT//2 - 110)
         elif game_mode == "40L":
             if logic.lines >= 40:
-                draw_glow_text(screen, "YOU WIN!", title_font, GREEN, WIDTH//2, HEIGHT//2 - 100)
-                draw_glow_text(screen, f"TIME: {blitz_time // 1000 // 60:02}:{blitz_time // 1000 % 60:02}", main_font, CYAN, WIDTH//2, HEIGHT//2 - 60, align="center")
+                draw_glow_text(screen, "YOU WIN!", title_font, GREEN, WIDTH//2, HEIGHT//2 - 110)
+                draw_glow_text(screen, f"TIME: {blitz_time // 1000 // 60:02}:{blitz_time // 1000 % 60:02}", main_font, CYAN, WIDTH//2, HEIGHT//2 - 65, align="center")
             else:
-                draw_glow_text(screen, "GAME OVER", title_font, RED, WIDTH//2, HEIGHT//2 - 100)
-                draw_glow_text(screen, f"LINES: {logic.lines}/40", main_font, CYAN, WIDTH//2, HEIGHT//2 - 60, align="center")
+                draw_glow_text(screen, "GAME OVER", title_font, RED, WIDTH//2, HEIGHT//2 - 110)
+                draw_glow_text(screen, f"LINES: {logic.lines}/40", main_font, CYAN, WIDTH//2, HEIGHT//2 - 65, align="center")
         else:
-            draw_glow_text(screen, "GAME OVER", title_font, RED, WIDTH//2, HEIGHT//2 - 80)
-        draw_glow_text(screen, f"FINAL SCORE: {logic.score}", main_font, YELLOW, WIDTH//2, HEIGHT//2 - 20)
+            draw_glow_text(screen, "GAME OVER", title_font, RED, WIDTH//2, HEIGHT//2 - 90)
+        draw_glow_text(screen, f"FINAL SCORE: {logic.score}", main_font, YELLOW, WIDTH//2, HEIGHT//2 - 25)
 
-        btn_w, btn_h = 200, 50
-        buttons["retry"] = draw_neon_button(screen, "RETRY", WIDTH//2 - btn_w - 20, HEIGHT//2 + 40, btn_w, btn_h, GREEN, mouse_pos)
-        buttons["menu"] = draw_neon_button(screen, "MENU", WIDTH//2 + 20, HEIGHT//2 + 40, btn_w, btn_h, PINK, mouse_pos)
+        btn_w, btn_h = 180, 48
+        total_w = btn_w * 3 + 20 * 2
+        start_x = WIDTH//2 - total_w//2
+        buttons["retry"] = draw_neon_button(screen, "RETRY", start_x, HEIGHT//2 + 35, btn_w, btn_h, GREEN, mouse_pos)
+        buttons["mode_select"] = draw_neon_button(screen, "MODE SELECT", start_x + btn_w + 20, HEIGHT//2 + 35, btn_w, btn_h, CYAN, mouse_pos)
+        buttons["menu"] = draw_neon_button(screen, "MAIN MENU", start_x + (btn_w + 20)*2, HEIGHT//2 + 35, btn_w, btn_h, PINK, mouse_pos)
     else:
         buttons["pause"] = draw_neon_button(screen, "PAUSE", WIDTH - 140, 20, 100, 40, PINK, mouse_pos)
 
     return buttons
 
 
-def draw_pvp_screen(screen, mouse_pos, pvp_config, logic1, logic2, particles1, particles2):
+def draw_pvp_screen(screen, mouse_pos, pvp_config, logic1, logic2, particles1, particles2, p1_keys=None, p2_keys=None):
     # Vẽ màn hình chơi game cho chế độ PvP (2 người chơi cạnh nhau).
     # Hiển thị hai bảng lưới riêng biệt, thông tin điểm số, combo và phần hướng dẫn phím.
     screen.fill(BG_COLOR)
@@ -234,26 +255,51 @@ def draw_pvp_screen(screen, mouse_pos, pvp_config, logic1, logic2, particles1, p
             # draw_glow_text(screen, "LOSER!", title_font, RED, center_x, board_y + board_h//2)
 
     if pvp_config["p1_type"] == "human":
-        p1_controls = ["[W] ROTA   [A/D] MOVE", "[S] DROP   [Q] HARD   [Z] HOLD"]
+        if p1_keys:
+            k = p1_keys
+            rot  = _key_label(k, "rotate")
+            left = _key_label(k, "move_left")
+            right= _key_label(k, "move_right")
+            down = _key_label(k, "move_down")
+            hard = _key_label(k, "hard_drop")
+            hold = _key_label(k, "hold")
+            p1_controls = [f"[{rot}] ROTA   [{left}/{right}] MOVE",
+                           f"[{down}] DROP   [{hard}] HARD   [{hold}] HOLD"]
+        else:
+            p1_controls = ["[W] ROTA   [A/D] MOVE", "[S] DROP   [Q] HARD   [Z] HOLD"]
     else:
         p1_controls = ["", "AI IS PLAYING...", ""]
 
     if pvp_config["p2_type"] == "human":
-        p2_controls = ["[UP] ROTA   [L/R] MOVE", "[DOWN] DROP   [SPACE] HARD   [/] HOLD"]
+        if p2_keys:
+            k = p2_keys
+            rot  = _key_label(k, "rotate")
+            left = _key_label(k, "move_left")
+            right= _key_label(k, "move_right")
+            down = _key_label(k, "move_down")
+            hard = _key_label(k, "hard_drop")
+            hold = _key_label(k, "hold")
+            p2_controls = [f"[{rot}] ROTA   [{left}/{right}] MOVE",
+                           f"[{down}] DROP   [{hard}] HARD   [{hold}] HOLD"]
+        else:
+            p2_controls = ["[UP] ROTA   [L/R] MOVE", "[DOWN] DROP   [SPACE] HARD   [/] HOLD"]
     else:
         p2_controls = ["", "AI IS PLAYING...", ""]
 
     draw_player_side(0, pvp_config["p1_name"], c1, logic1, p1_controls, particles1)
     draw_player_side(400, pvp_config["p2_name"], c2, logic2, p2_controls, particles2)
 
-    buttons = {"menu": None, "retry": None, "pause": None}
+    buttons = {"menu": None, "retry": None, "pause": None, "mode_select": None}
 
     if logic1.game_over or logic2.game_over:
         win_text = pvp_config["p2_name"] + " WINS!" if logic1.game_over else pvp_config["p1_name"] + " WINS!"
-        draw_glow_text(screen, win_text, title_font, YELLOW, WIDTH//2, HEIGHT//2 - 20)
-        btn_w, btn_h = 200, 50
-        buttons["retry"] = draw_neon_button(screen, "RETRY PVP", WIDTH//2 - btn_w - 20, HEIGHT//2 + 40, btn_w, btn_h, GREEN, mouse_pos)
-        buttons["menu"] = draw_neon_button(screen, "MENU", WIDTH//2 + 20, HEIGHT//2 + 40, btn_w, btn_h, PINK, mouse_pos)
+        draw_glow_text(screen, win_text, title_font, YELLOW, WIDTH//2, HEIGHT//2 - 30)
+        btn_w, btn_h = 180, 48
+        total_w = btn_w * 3 + 20 * 2
+        start_x = WIDTH//2 - total_w//2
+        buttons["retry"] = draw_neon_button(screen, "RETRY PVP", start_x, HEIGHT//2 + 30, btn_w, btn_h, GREEN, mouse_pos)
+        buttons["mode_select"] = draw_neon_button(screen, "MODE SELECT", start_x + btn_w + 20, HEIGHT//2 + 30, btn_w, btn_h, CYAN, mouse_pos)
+        buttons["menu"] = draw_neon_button(screen, "MAIN MENU", start_x + (btn_w + 20)*2, HEIGHT//2 + 30, btn_w, btn_h, PINK, mouse_pos)
     else:
         buttons["pause"] = draw_neon_button(screen, "PAUSE", WIDTH//2 - 50, 10, 100, 35, PINK, mouse_pos)
 
