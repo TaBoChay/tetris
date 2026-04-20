@@ -12,6 +12,10 @@ from ai import TetrisAI
 
 # Helper: Check if key matches configured key
 def key_matches(event_key, config_key_name, key_config):
+    """
+    Kiểm tra xem phím bấm (event_key) có khớp với cấu hình phím đã thiết lập hay không.
+    Trả về True nếu khớp.
+    """
     return event_key == get_key_constant(key_config.get(config_key_name, "left"))
 
 # Config menu slider geometry (phải khớp với menus.py)
@@ -28,6 +32,11 @@ pygame.display.set_caption("Tetris Cyberpunk Edition")
 pygame.key.set_repeat(200, 50)
 
 def main():
+    """
+    Hàm chính của chương trình.
+    Khởi tạo game loop, xử lý sự kiện, cập nhật logic và vẽ giao diện
+    tuỳ theo trạng thái hiện tại (Menu, Settings, Solo Game, PvP Game, v.v.).
+    """
     clock = pygame.time.Clock()
     current_state = "MAIN_MENU"
     active_input = None
@@ -63,6 +72,8 @@ def main():
     p2_game_over_sounded = False
 
     def spawn_particles(logic, particles_list, offset_x=0, block_size=BLOCK_SIZE):
+        # Tạo hiệu ứng hạt (particles) khi một dòng gạch bị phá huỷ.
+        # Tính toán vị trí phát sinh hạt dưa trên toạ độ của các khối gạch đã bị xoá.
         if logic.cleared_blocks_anim:
             board_w = logic.cols * block_size
             board_x = offset_x + (WIDTH//2 - board_w) // 2 if offset_x != -1 else (WIDTH - board_w) // 2

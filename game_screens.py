@@ -4,6 +4,7 @@ from settings import *
 from ui import *
 
 def draw_play_screen_solo(screen, mouse_pos, logic, particles, game_mode=None, blitz_time=0):
+    # Vẽ màn hình chơi game
     screen.fill(BG_COLOR)
     if game_mode == "40L":
         draw_glow_text(screen, "40 LINES", title_font, GREEN, WIDTH//2, 40, align="center")
@@ -134,6 +135,8 @@ def draw_play_screen_solo(screen, mouse_pos, logic, particles, game_mode=None, b
 
 
 def draw_pvp_screen(screen, mouse_pos, pvp_config, logic1, logic2, particles1, particles2):
+    # Vẽ màn hình chơi game cho chế độ PvP (2 người chơi cạnh nhau).
+    # Hiển thị hai bảng lưới riêng biệt, thông tin điểm số, combo và phần hướng dẫn phím.
     screen.fill(BG_COLOR)
     pygame.draw.line(screen, (*CYAN, 100), (WIDTH//2, 60), (WIDTH//2, HEIGHT - 20), 2)
 
@@ -141,6 +144,8 @@ def draw_pvp_screen(screen, mouse_pos, pvp_config, logic1, logic2, particles1, p
     c2 = COLOR_MAP.get(pvp_config["p2_color"], PINK)
 
     def draw_player_side(offset_x, player_name, color, logic, controls_lines, particles_list):
+        # Vẽ riêng một nửa màn hình (trái/phải) cho từng người chơi.
+        # Bao gồm lưới, gạch Hold, gạch Next và trạng thái Thắng/Thua.
         center_x = offset_x + 200
         if offset_x > 200:
             center_x += 40
@@ -221,7 +226,7 @@ def draw_pvp_screen(screen, mouse_pos, pvp_config, logic1, logic2, particles1, p
             overlay = pygame.Surface((board_w, board_h), pygame.SRCALPHA)
             overlay.fill((0, 0, 0, 180))
             screen.blit(overlay, (board_x, board_y))
-            draw_glow_text(screen, "LOSER!", title_font, RED, center_x, board_y + board_h//2)
+            # draw_glow_text(screen, "LOSER!", title_font, RED, center_x, board_y + board_h//2)
 
     if pvp_config["p1_type"] == "human":
         p1_controls = ["[W] ROTA   [A/D] MOVE", "[S] DROP   [Q] HARD   [Z] HOLD"]

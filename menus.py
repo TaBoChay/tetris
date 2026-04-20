@@ -4,6 +4,7 @@ from settings import *
 from ui import *
 
 def draw_main_menu(screen, mouse_pos):
+    """Vẽ màn hình menu chính với các lựa chọn: Solo, Multiplayer, Config, About, Exit."""
     screen.fill(BG_COLOR)
     for block in floating_blocks: block.update(); block.draw(screen)
     draw_glow_text(screen, "TETRIS", title_font, CYAN, WIDTH//2, 100)
@@ -18,6 +19,7 @@ def draw_main_menu(screen, mouse_pos):
     return b_solo, b_multi, b_conf, b_about, b_exit
 
 def draw_about_menu(screen, mouse_pos):
+    """Vẽ màn hình thông tin (About), hướng dẫn luật chơi, cách điều khiển và cách tính điểm."""
     screen.fill(BG_COLOR)
     for block in floating_blocks: block.update(); block.draw(screen)
     
@@ -69,6 +71,7 @@ def draw_about_menu(screen, mouse_pos):
     return btn_back
 
 def draw_solo_menu(screen, mouse_pos):
+    """Vẽ màn hình chọn chế độ chơi đơn (Solo): 40 Lines, Blitz, Custom."""
     screen.fill(BG_COLOR)
     for block in floating_blocks: block.update(); block.draw(screen)
     btn_back = draw_neon_button(screen, "< BACK", 30, 30, 120, 40, PINK, mouse_pos)
@@ -81,6 +84,7 @@ def draw_solo_menu(screen, mouse_pos):
     return btn_back, b_40l, b_blitz, b_custom
 
 def draw_solo_custom_menu(screen, mouse_pos, config):
+    """Vẽ màn hình tuỳ chỉnh cấu hình cho chế độ Solo Custom (Level, Grid, Ghost, Hold)."""
     screen.fill(BG_COLOR)
     for block in floating_blocks: block.update(); block.draw(screen)
     draw_glow_text(screen, "SOLO CUSTOM", title_font, CYAN, WIDTH//2, 50)
@@ -131,6 +135,7 @@ def draw_solo_custom_menu(screen, mouse_pos, config):
     return buttons
 
 def draw_config_menu(screen, mouse_pos, sys_config):
+    """Vẽ màn hình cài đặt hệ thống (Volume, SFX, Brightness)."""
     screen.fill(BG_COLOR)
     for block in floating_blocks: block.update(); block.draw(screen)
     btn_back = draw_neon_button(screen, "< BACK", 30, 30, 120, 40, PINK, mouse_pos)
@@ -179,6 +184,10 @@ def draw_config_menu(screen, mouse_pos, sys_config):
     return btn_back, buttons
 
 def draw_pvp_settings(screen, mouse_pos, config, active_input):
+    """
+    Vẽ màn hình cài đặt cho chế độ PvP (Player vs Player / Player vs AI).
+    Cấu hình bao gồm: Level, Grid, Cài đặt AI (nếu có), Tên, Màu sắc và Phím điều khiển của 2 người chơi.
+    """
     screen.fill(BG_COLOR)
     for block in floating_blocks: block.update(); block.draw(screen)
     draw_glow_text(screen, "PVP SETTINGS", title_font, CYAN, WIDTH//2, 40)
@@ -308,7 +317,10 @@ def draw_pvp_settings(screen, mouse_pos, config, active_input):
     return buttons
 
 def draw_keyconfig_menu(screen, mouse_pos, mode, config, rebinding_key=None):
-    """Draw key configuration menu for SOLO or PVP mode"""
+    """
+    Vẽ màn hình thiết lập phím điều khiển (Key bindings) cho cả chế độ Solo và PvP.
+    Hiển thị thông báo khi đang chờ người dùng nhập phím mới (rebinding_key).
+    """
     screen.fill(BG_COLOR)
     for block in floating_blocks: block.update(); block.draw(screen)
     
@@ -366,6 +378,10 @@ def draw_keyconfig_menu(screen, mouse_pos, mode, config, rebinding_key=None):
     return buttons
 
 def draw_pause_menu(screen, mouse_pos, sys_config, game_state):
+    """
+    Vẽ màn hình Pause (tạm dừng) hiện đè lên trên game đang chạy.
+    Cho phép thay đổi âm lượng, tuỳ chỉnh phím, tiếp tục chơi hoặc thoát ra menu chính.
+    """
     overlay = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
     overlay.fill((0, 0, 0, 180))
     screen.blit(overlay, (0, 0))

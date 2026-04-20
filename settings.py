@@ -126,6 +126,10 @@ def get_gravity_frames(level):
 
 
 def _merge_config(defaults, loaded):
+    """
+    Gộp cấu hình được tải lên (loaded) vào cấu hình mặc định (defaults).
+    Chỉ cập nhật những khoá tồn tại trong cấu hình mặc định.
+    """
     merged = defaults.copy()
     if isinstance(loaded, dict):
         for key, value in loaded.items():
@@ -164,6 +168,10 @@ def save_user_config(config, path=CONFIG_FILE):
 
 
 def apply_brightness(color, brightness):
+    """
+    Điều chỉnh độ sáng tối của một mã màu RGB nhất định.
+    Hỗ trợ 'dim' (tối đi), 'bright' (sáng lên), hoặc 'normal' (bình thường).
+    """
     if brightness == "dim":
         factor = 0.75
     elif brightness == "bright":
@@ -197,7 +205,9 @@ KEY_DISPLAY.update({
 })
 
 def get_key_constant(key_name):
-    """Convert string key name to pygame constant"""
+    """
+    Chuyển đổi tên phím dạng chuỗi (vd: 'left', 'w') thành hằng số phím của Pygame (vd: K_LEFT).
+    """
     key_lower = key_name.lower()
     if key_lower in KEY_MAP:
         return KEY_MAP[key_lower]
@@ -211,7 +221,9 @@ def get_key_constant(key_name):
     return pygame.K_UNKNOWN if hasattr(pygame, 'K_UNKNOWN') else 0
 
 def get_key_display_name(key_constant):
-    """Convert pygame constant to display name"""
+    """
+    Chuyển đổi hằng số phím của Pygame thành tên chuỗi hiển thị lên giao diện (vd: 'W', 'LEFT').
+    """
     if key_constant in KEY_DISPLAY:
         return KEY_DISPLAY[key_constant]
         
