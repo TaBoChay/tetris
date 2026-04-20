@@ -402,10 +402,12 @@ def main():
                         fall_time = 0; particles.clear()
                         solo_clear_played = False
                         solo_game_over_sounded = False
+                        game_mode = None
+                        blitz_time = 0
                         current_state = "SOLO_GAME"
                         play_sfx("button")
                     else:
-                        for cat in ["level", "level_up", "grid", "ghost", "hold"]:
+                        for cat in ["level", "grid", "ghost", "hold"]:
                             for key, rect in btns[cat].items():
                                 if rect.collidepoint(mouse_pos):
                                     solo_config[cat] = key
