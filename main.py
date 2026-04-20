@@ -31,7 +31,9 @@ def main():
     clock = pygame.time.Clock()
     current_state = "MAIN_MENU"
     active_input = None
-    volume_dragging = False
+    volume_dragging = None
+    keys_held = set()
+    is_paused = False
 
     config_data = load_user_config()
     sys_config = config_data["sys"]
@@ -77,67 +79,81 @@ def main():
         mouse_pos = pygame.mouse.get_pos()
 
         if current_state == "SOLO_GAME" and solo_logic:
-            if not solo_logic.game_over:
-                if game_mode == "BLITZ":
-                    blitz_time -= dt
-                    if blitz_time <= 0:
-                        blitz_time = 0
-                        solo_logic.game_over = True
+            if not is_paused:
+                if not solo_logic.game_over:
+                    if game_mode == "BLITZ":
+                        blitz_time -= dt
+                        if blitz_time <= 0:
+                            blitz_time = 0
+                            solo_logic.game_over = True
 
-                if game_mode == "40L":
-                    blitz_time += dt
+                    if game_mode == "40L":
+                        blitz_time += dt
 
-                fall_time += dt
-                if fall_time >= solo_logic.get_fall_speed():
-                    fall_time = 0; solo_logic.move(0, 1)
+                    fall_time += dt
+                    if fall_time >= solo_logic.get_fall_speed():
+                        fall_time = 0; solo_logic.move(0, 1)
 
-                if solo_logic.lines_cleared_this_turn > 0 and not solo_clear_played:
-                    play_sfx("clear")
-                    solo_clear_played = True
-                elif solo_logic.lines_cleared_this_turn == 0:
-                    solo_clear_played = False
+                    if solo_logic.lines_cleared_this_turn > 0 and not solo_clear_played:
+                        play_sfx("clear")
+                        solo_clear_played = True
+                    elif solo_logic.lines_cleared_this_turn == 0:
+                        solo_clear_played = False
 
-            if solo_logic.game_over and not solo_game_over_sounded:
-                play_sfx("game_over")
-                solo_game_over_sounded = True
+                if solo_logic.game_over and not solo_game_over_sounded:
+                    play_sfx("game_over")
+                    solo_game_over_sounded = True
 
-            spawn_particles(solo_logic, particles, -1, 540 // solo_logic.rows)
-            for p in particles[:]:
-                p.update()
-                if p.alpha <= 0: particles.remove(p)
+                spawn_particles(solo_logic, particles, -1, 540 // solo_logic.rows)
+                for p in particles[:]:
+                    p.update()
+                    if p.alpha <= 0: particles.remove(p)
 
         elif current_state == "PVP_GAME" and p1_logic and p2_logic:
-            game_ended = p1_logic.game_over or p2_logic.game_over
+            if not is_paused:
+                game_ended = p1_logic.game_over or p2_logic.game_over
 
-            if not game_ended:
-                if p1_ai: p1_ai.update(p1_logic, dt)
-                if p2_ai: p2_ai.update(p2_logic, dt)
+                if not game_ended:
+                    if p1_ai: p1_ai.update(p1_logic, dt)
+                    if p2_ai: p2_ai.update(p2_logic, dt)
 
-            if not game_ended:
-                p1_fall_time += dt
-                if p1_fall_time >= p1_logic.get_fall_speed():
-                    p1_fall_time = 0; p1_logic.move(0, 1)
+                if not game_ended:
+                    p1_fall_time += dt
+                    if p1_fall_time >= p1_logic.get_fall_speed():
+                        p1_fall_time = 0; p1_logic.move(0, 1)
 
-                p2_fall_time += dt
-                if p2_fall_time >= p2_logic.get_fall_speed():
-                    p2_fall_time = 0; p2_logic.move(0, 1)
+                    p2_fall_time += dt
+                    if p2_fall_time >= p2_logic.get_fall_speed():
+                        p2_fall_time = 0; p2_logic.move(0, 1)
 
-            p1_garbage = p1_logic.get_garbage_amount()
-            p1_logic.get_and_reset_cleared_lines()
-            if p1_garbage > 0: p2_logic.add_garbage_lines(p1_garbage)
+                p1_garbage = p1_logic.get_garbage_amount()
+                p1_logic.get_and_reset_cleared_lines()
+                if p1_garbage > 0: p2_logic.add_garbage_lines(p1_garbage)
 
-            p2_garbage = p2_logic.get_garbage_amount()
-            p2_logic.get_and_reset_cleared_lines()
-            if p2_garbage > 0: p1_logic.add_garbage_lines(p2_garbage)
+                p2_garbage = p2_logic.get_garbage_amount()
+                p2_logic.get_and_reset_cleared_lines()
+                if p2_garbage > 0: p1_logic.add_garbage_lines(p2_garbage)
 
-            if p1_garbage > 0 or p2_garbage > 0:
-                play_sfx("clear")
+                if p1_garbage > 0 or p2_garbage > 0:
+                    play_sfx("clear")
 
-            if game_ended and not p2_game_over_sounded:
-                play_sfx("game_over")
-                p2_game_over_sounded = True
+                if game_ended and not p2_game_over_sounded:
+                    play_sfx("game_over")
+                    p2_game_over_sounded = True
 
         for event in pygame.event.get():
+            is_repeat = False
+            if event.type == pygame.KEYDOWN:
+                is_repeat = event.key in keys_held
+                keys_held.add(event.key)
+                
+                if not is_repeat and event.key in (pygame.K_ESCAPE, pygame.K_p):
+                    if current_state in ("SOLO_GAME", "PVP_GAME"):
+                        is_paused = not is_paused
+                        play_sfx("button")
+            elif event.type == pygame.KEYUP:
+                keys_held.discard(event.key)
+
             if event.type == pygame.QUIT:
                 pygame.quit(); sys.exit()
 
@@ -154,7 +170,7 @@ def main():
                 config_dirty = True
                 play_sfx("button")
 
-            if current_state == "SOLO_GAME" and solo_logic and not solo_logic.game_over:
+            if current_state == "SOLO_GAME" and solo_logic and not solo_logic.game_over and not is_paused:
                 if event.type == pygame.KEYDOWN:
                     keys = solo_config.get("keys", DEFAULT_SOLO_KEYS)
                     if key_matches(event.key, "move_left", keys):
@@ -167,16 +183,19 @@ def main():
                         solo_logic.move(0, 1); fall_time = 0
                         play_sfx("move")
                     elif key_matches(event.key, "rotate", keys):
-                        solo_logic.rotate()
-                        play_sfx("rotate")
+                        if not is_repeat:
+                            solo_logic.rotate()
+                            play_sfx("rotate")
                     elif key_matches(event.key, "hard_drop", keys):
-                        solo_logic.hard_drop(); fall_time = 0
-                        play_sfx("hard_drop")
+                        if not is_repeat:
+                            solo_logic.hard_drop(); fall_time = 0
+                            play_sfx("hard_drop")
                     elif key_matches(event.key, "hold", keys):
-                        solo_logic.swap_hold()
-                        play_sfx("hold")
+                        if not is_repeat:
+                            solo_logic.swap_hold()
+                            play_sfx("hold")
 
-            elif current_state == "PVP_GAME" and not p1_logic.game_over and not p2_logic.game_over:
+            elif current_state == "PVP_GAME" and not p1_logic.game_over and not p2_logic.game_over and not is_paused:
                 if event.type == pygame.KEYDOWN:
                     p1_keys = pvp_config.get("p1_keys", DEFAULT_PVP_P1_KEYS)
                     p2_keys = pvp_config.get("p2_keys", DEFAULT_PVP_P2_KEYS)
@@ -192,14 +211,17 @@ def main():
                             p1_logic.move(0, 1); p1_fall_time = 0
                             play_sfx("move")
                         elif key_matches(event.key, "rotate", p1_keys):
-                            p1_logic.rotate()
-                            play_sfx("rotate")
+                            if not is_repeat:
+                                p1_logic.rotate()
+                                play_sfx("rotate")
                         elif key_matches(event.key, "hard_drop", p1_keys):
-                            p1_logic.hard_drop(); p1_fall_time = 0
-                            play_sfx("hard_drop")
+                            if not is_repeat:
+                                p1_logic.hard_drop(); p1_fall_time = 0
+                                play_sfx("hard_drop")
                         elif key_matches(event.key, "hold", p1_keys):
-                            p1_logic.swap_hold()
-                            play_sfx("hold")
+                            if not is_repeat:
+                                p1_logic.swap_hold()
+                                play_sfx("hold")
 
                     if pvp_config["p2_type"] == "human":
                         if key_matches(event.key, "move_left", p2_keys):
@@ -212,14 +234,17 @@ def main():
                             p2_logic.move(0, 1); p2_fall_time = 0
                             play_sfx("move")
                         elif key_matches(event.key, "rotate", p2_keys):
-                            p2_logic.rotate()
-                            play_sfx("rotate")
+                            if not is_repeat:
+                                p2_logic.rotate()
+                                play_sfx("rotate")
                         elif key_matches(event.key, "hard_drop", p2_keys):
-                            p2_logic.hard_drop(); p2_fall_time = 0
-                            play_sfx("hard_drop")
+                            if not is_repeat:
+                                p2_logic.hard_drop(); p2_fall_time = 0
+                                play_sfx("hard_drop")
                         elif key_matches(event.key, "hold", p2_keys):
-                            p2_logic.swap_hold()
-                            play_sfx("hold")
+                            if not is_repeat:
+                                p2_logic.swap_hold()
+                                play_sfx("hold")
 
             elif event.type == pygame.KEYDOWN and active_input:
                 if event.key == pygame.K_BACKSPACE:
@@ -258,7 +283,7 @@ def main():
                         if btns["volume_slider"]:
                             track_rect, thumb_rect = btns["volume_slider"]
                             if track_rect.collidepoint(mouse_pos) or thumb_rect.collidepoint(mouse_pos):
-                                volume_dragging = True
+                                volume_dragging = track_rect
                                 rel_x = mouse_pos[0] - track_rect.x
                                 ratio = max(0.0, min(1.0, rel_x / track_rect.width))
                                 new_vol = int(ratio * 100)
@@ -301,7 +326,9 @@ def main():
                             # Map return state correctly
                             state_map = {
                                 "config": "CONFIG_MENU",
-                                "pvp_settings": "PVP_SETTINGS"
+                                "pvp_settings": "PVP_SETTINGS",
+                                "pause_solo": "SOLO_GAME",
+                                "pause_pvp": "PVP_GAME"
                             }
                             ret_state = state_map.get(rebinding_key_from, "CONFIG_MENU")
                             rebinding_key_from = None
@@ -416,7 +443,45 @@ def main():
                                 rebinding_key_from = "pvp_settings"
                                 play_sfx("button")
 
-                elif current_state == "SOLO_GAME":
+                elif current_state in ("SOLO_GAME", "PVP_GAME") and is_paused:
+                    btns = draw_pause_menu(screen, mouse_pos, sys_config, current_state)
+                    if btns["resume"] and btns["resume"].collidepoint(mouse_pos):
+                        is_paused = False
+                        play_sfx("button")
+                    elif btns["quit"] and btns["quit"].collidepoint(mouse_pos):
+                        is_paused = False
+                        current_state = "MAIN_MENU"
+                        play_sfx("button")
+                    elif btns["keys_solo"] and btns["keys_solo"].collidepoint(mouse_pos):
+                        current_state = "KEYCONFIG_MENU"
+                        rebinding_key_mode = "solo"
+                        rebinding_key_action = None
+                        rebinding_key_from = "pause_solo"
+                        play_sfx("button")
+                    elif btns["keys_p1"] and btns["keys_p1"].collidepoint(mouse_pos):
+                        current_state = "KEYCONFIG_MENU"
+                        rebinding_key_mode = "pvp_p1"
+                        rebinding_key_action = None
+                        rebinding_key_from = "pause_pvp"
+                        play_sfx("button")
+                    elif btns["keys_p2"] and btns["keys_p2"].collidepoint(mouse_pos):
+                        current_state = "KEYCONFIG_MENU"
+                        rebinding_key_mode = "pvp_p2"
+                        rebinding_key_action = None
+                        rebinding_key_from = "pause_pvp"
+                        play_sfx("button")
+                    elif btns["volume_slider"]:
+                        track_rect, thumb_rect = btns["volume_slider"]
+                        if track_rect.collidepoint(mouse_pos) or thumb_rect.collidepoint(mouse_pos):
+                            volume_dragging = track_rect
+                            rel_x = mouse_pos[0] - track_rect.x
+                            ratio = max(0.0, min(1.0, rel_x / track_rect.width))
+                            new_vol = int(ratio * 100)
+                            sys_config["volume"] = new_vol
+                            config_dirty = True
+                            set_master_volume(new_vol)
+                            
+                elif current_state == "SOLO_GAME" and not is_paused:
                     btns = draw_play_screen_solo(screen, mouse_pos, solo_logic, particles, game_mode, blitz_time)
                     if btns["menu"] and btns["menu"].collidepoint(mouse_pos):
                         game_mode = None
@@ -426,7 +491,7 @@ def main():
                         fall_time = 0; particles.clear()
                         if game_mode == "BLITZ": blitz_time = 120000
 
-                elif current_state == "PVP_GAME":
+                elif current_state == "PVP_GAME" and not is_paused:
                     btns = draw_pvp_screen(screen, mouse_pos, pvp_config, p1_logic, p2_logic, p1_particles, p2_particles)
                     if btns["menu"].collidepoint(mouse_pos): current_state = "MAIN_MENU"
                     elif btns["retry"] and btns["retry"].collidepoint(mouse_pos):
@@ -436,8 +501,8 @@ def main():
                         p1_particles.clear(); p2_particles.clear()
 
             if event.type == pygame.MOUSEMOTION:
-                if current_state == "CONFIG_MENU" and volume_dragging:
-                    track_rect = pygame.Rect(VOL_SLIDER_TRACK_X, VOL_SLIDER_TRACK_Y, VOL_SLIDER_TRACK_W, VOL_SLIDER_TRACK_H)
+                if volume_dragging is not None:
+                    track_rect = volume_dragging
                     rel_x = mouse_pos[0] - track_rect.x
                     ratio = max(0.0, min(1.0, rel_x / track_rect.width))
                     new_vol = int(ratio * 100)
@@ -446,7 +511,7 @@ def main():
                         config_dirty = True
                         set_master_volume(new_vol)
             if event.type == pygame.MOUSEBUTTONUP:
-                volume_dragging = False
+                volume_dragging = None
 
         if current_state == "MAIN_MENU": draw_main_menu(screen, mouse_pos)
         elif current_state == "ABOUT_MENU": draw_about_menu(screen, mouse_pos)
@@ -465,6 +530,9 @@ def main():
         elif current_state == "PVP_SETTINGS": draw_pvp_settings(screen, mouse_pos, pvp_config, active_input)
         elif current_state == "SOLO_GAME": draw_play_screen_solo(screen, mouse_pos, solo_logic, particles, game_mode, blitz_time)
         elif current_state == "PVP_GAME": draw_pvp_screen(screen, mouse_pos, pvp_config, p1_logic, p2_logic, p1_particles, p2_particles)
+
+        if current_state in ("SOLO_GAME", "PVP_GAME") and is_paused:
+            draw_pause_menu(screen, mouse_pos, sys_config, current_state)
 
         if config_dirty:
             save_user_config({"sys": sys_config, "solo": solo_config, "pvp": pvp_config})
