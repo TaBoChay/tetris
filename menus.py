@@ -186,46 +186,48 @@ def draw_config_menu(screen, mouse_pos, sys_config):
     return btn_back, buttons
 
 def draw_ai_mode_tooltip(screen, mouse_pos):
-    tooltip_w = 460
-    tooltip_h = 320
+    tooltip_w = 530
+    tooltip_h = 430
     tt_x = mouse_pos[0] + 15
     tt_y = mouse_pos[1] + 15
     if tt_x + tooltip_w > WIDTH:
         tt_x = mouse_pos[0] - tooltip_w - 15
     if tt_y + tooltip_h > HEIGHT:
         tt_y = HEIGHT - tooltip_h - 10
-        
+
     tt_surf = pygame.Surface((tooltip_w, tooltip_h), pygame.SRCALPHA)
-    pygame.draw.rect(tt_surf, (20, 20, 20, 240), tt_surf.get_rect(), border_radius=8)
+    pygame.draw.rect(tt_surf, (15, 15, 30, 245), tt_surf.get_rect(), border_radius=10)
     screen.blit(tt_surf, (tt_x, tt_y))
-    pygame.draw.rect(screen, CYAN, (tt_x, tt_y, tooltip_w, tooltip_h), 2, border_radius=8)
-        
+    pygame.draw.rect(screen, CYAN, (tt_x, tt_y, tooltip_w, tooltip_h), 2, border_radius=10)
+
     lines = [
-        ("1. BALANCED", small_font, CYAN),
-        ("Style: Safe & Steady.", tiny_font, WHITE),
-        ("Info: Balances attack and defense.", tiny_font, WHITE),
-        ("      Rarely makes mistakes.", tiny_font, WHITE),
-        ("Tip: Great for warm-ups.", tiny_font, WHITE),
-        ("", tiny_font, WHITE),
-        ("2. AGGRESSIVE", small_font, ORANGE),
-        ("Style: High Pressure!", tiny_font, WHITE),
-        ("Info: Spams garbage lines at all costs,", tiny_font, WHITE),
-        ("      ignoring its own board.", tiny_font, WHITE),
-        ("Tip: Don't build high. Clear lines fast!", tiny_font, WHITE),
-        ("", tiny_font, WHITE),
-        ("3. DEFENSIVE", small_font, BLUE),
-        ("Style: Survival Focus.", tiny_font, WHITE),
-        ("Info: Keeps board low, plays safe,", tiny_font, WHITE),
-        ("      and waits for your mistakes.", tiny_font, WHITE),
-        ("Tip: Take time to set up massive", tiny_font, WHITE),
-        ("      combos to break its defense.", tiny_font, WHITE),
+        ("1. BALANCED", main_font, CYAN),
+        ("Style: Safe & Steady.", small_font, (180, 220, 255)),
+        ("Info: Balances attack and defense.", small_font, WHITE),
+        ("      Rarely makes mistakes.", small_font, WHITE),
+        ("Tip: Great for warm-ups.", small_font, YELLOW),
+        ("", small_font, WHITE),
+        ("2. AGGRESSIVE", main_font, ORANGE),
+        ("Style: High Pressure!", small_font, (255, 210, 180)),
+        ("Info: Spams garbage lines at all costs,", small_font, WHITE),
+        ("      ignoring its own board.", small_font, WHITE),
+        ("Tip: Don't build high. Clear lines fast!", small_font, YELLOW),
+        ("", small_font, WHITE),
+        ("3. DEFENSIVE", main_font, BLUE),
+        ("Style: Survival Focus.", small_font, (180, 200, 255)),
+        ("Info: Keeps board low, plays safe,", small_font, WHITE),
+        ("      and waits for your mistakes.", small_font, WHITE),
+        ("Tip: Take time to set up massive", small_font, YELLOW),
+        ("      combos to break its defense.", small_font, YELLOW),
     ]
-    
-    y_offset = tt_y + 15
+
+    y_offset = tt_y + 16
     for text, f, color in lines:
-        text_surf = f.render(text, False, color)
-        screen.blit(text_surf, (tt_x + 15, y_offset))
-        y_offset += text_surf.get_height() + 4
+        if text == "":
+            y_offset += 8
+            continue
+        render_bold_text(screen, text, f, color, tt_x + 16, y_offset + f.get_height() // 2, align="left")
+        y_offset += f.get_height() + 6
 
 def draw_pvp_settings(screen, mouse_pos, config, active_input):
     """
