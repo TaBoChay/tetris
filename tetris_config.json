@@ -6,7 +6,7 @@
     "brightness": "normal"
   },
   "solo": {
-    "level": "1",
+    "level": "15",
     "grid": "12x25",
     "ghost": "on",
     "hold": "on",
@@ -21,23 +21,23 @@
     }
   },
   "pvp": {
-    "level": "1",
+    "level": "15",
     "grid": "8x15",
     "ai_diff": "easy",
     "ai_mode": "balanced",
     "p1_name": "PLAYER 1",
     "p1_color": "gold",
     "p1_type": "human",
-    "p2_name": "AI",
+    "p2_name": "PLAYER 2",
     "p2_color": "pink",
-    "p2_type": "ai",
+    "p2_type": "human",
     "p1_keys": {
       "move_left": "a",
       "move_right": "d",
       "move_down": "s",
       "rotate": "w",
       "hard_drop": "q",
-      "hold": "z"
+      "hold": "c"
     },
     "p2_keys": {
       "move_left": "left",
@@ -45,7 +45,7 @@
       "move_down": "down",
       "rotate": "up",
       "hard_drop": "space",
-      "hold": "slash"
+      "hold": "1"
     }
   }
 }
