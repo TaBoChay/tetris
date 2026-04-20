@@ -369,8 +369,10 @@ def main():
                     if b_back.collidepoint(mouse_pos):
                         current_state = "MAIN_MENU"
                     elif b_40l.collidepoint(mouse_pos):
-                        config_40l = solo_config.copy()
-                        config_40l["level_up"] = "off"  # Khóa level ở 1
+                        config_40l = {
+                            "level": "1", "grid": "10x20", "ghost": "on", "hold": "on",
+                            "level_up": "off", "keys": solo_config.get("keys", DEFAULT_SOLO_KEYS)
+                        }
                         solo_logic = TetrisLogic(config_40l)
                         fall_time = 0; particles.clear()
                         game_mode = "40L"
@@ -380,7 +382,11 @@ def main():
                         current_state = "SOLO_GAME"
                         play_sfx("button")
                     elif b_blitz.collidepoint(mouse_pos):
-                        solo_logic = TetrisLogic(solo_config)
+                        config_blitz = {
+                            "level": "1", "grid": "10x20", "ghost": "on", "hold": "on",
+                            "level_up": "on", "keys": solo_config.get("keys", DEFAULT_SOLO_KEYS)
+                        }
+                        solo_logic = TetrisLogic(config_blitz)
                         fall_time = 0; particles.clear()
                         game_mode = "BLITZ"
                         blitz_time = 120000
@@ -513,7 +519,19 @@ def main():
                         is_paused = True
                         play_sfx("button")
                     elif btns["retry"] and btns["retry"].collidepoint(mouse_pos):
-                        solo_logic = TetrisLogic(solo_config)
+                        if game_mode == "40L":
+                            cfg = {
+                                "level": "1", "grid": "10x20", "ghost": "on", "hold": "on",
+                                "level_up": "off", "keys": solo_config.get("keys", DEFAULT_SOLO_KEYS)
+                            }
+                        elif game_mode == "BLITZ":
+                            cfg = {
+                                "level": "1", "grid": "10x20", "ghost": "on", "hold": "on",
+                                "level_up": "on", "keys": solo_config.get("keys", DEFAULT_SOLO_KEYS)
+                            }
+                        else:
+                            cfg = solo_config
+                        solo_logic = TetrisLogic(cfg)
                         fall_time = 0; particles.clear()
                         if game_mode == "BLITZ": blitz_time = 120000
 
