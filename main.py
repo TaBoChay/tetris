@@ -100,6 +100,8 @@ def main():
 
                     if game_mode == "40L":
                         blitz_time += dt
+                        if solo_logic.lines >= 40:
+                            solo_logic.game_over = True
 
                     fall_time += dt
                     if fall_time >= solo_logic.get_fall_speed():
