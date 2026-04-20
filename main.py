@@ -495,6 +495,10 @@ def main():
                     if btns["menu"] and btns["menu"].collidepoint(mouse_pos):
                         game_mode = None
                         current_state = "MAIN_MENU"
+                        play_sfx("button")
+                    elif btns.get("pause") and btns["pause"].collidepoint(mouse_pos):
+                        is_paused = True
+                        play_sfx("button")
                     elif btns["retry"] and btns["retry"].collidepoint(mouse_pos):
                         solo_logic = TetrisLogic(solo_config)
                         fall_time = 0; particles.clear()
@@ -502,7 +506,12 @@ def main():
 
                 elif current_state == "PVP_GAME" and not is_paused:
                     btns = draw_pvp_screen(screen, mouse_pos, pvp_config, p1_logic, p2_logic, p1_particles, p2_particles)
-                    if btns["menu"].collidepoint(mouse_pos): current_state = "MAIN_MENU"
+                    if btns["menu"] and btns["menu"].collidepoint(mouse_pos): 
+                        current_state = "MAIN_MENU"
+                        play_sfx("button")
+                    elif btns.get("pause") and btns["pause"].collidepoint(mouse_pos):
+                        is_paused = True
+                        play_sfx("button")
                     elif btns["retry"] and btns["retry"].collidepoint(mouse_pos):
                         p1_logic = TetrisLogic(pvp_config)
                         p2_logic = TetrisLogic(pvp_config)

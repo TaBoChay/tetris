@@ -21,6 +21,8 @@ class TetrisLogic:
         self.ghost_enabled = config.get('ghost', 'on') == 'on'
         self.hold_enabled = config.get('hold', 'on') == 'on'
         
+        self.bag = []
+        
         self.current_piece = self.get_new_piece()
         self.next_piece = self.get_new_piece()
         self.hold_piece = None
@@ -32,7 +34,11 @@ class TetrisLogic:
         self.combo = 0  # Combo counter cho garbage multiplier
 
     def get_new_piece(self):
-        return Piece(self.cols // 2 - 2, 0, random.choice(list(SHAPES.keys())))
+        if not hasattr(self, 'bag') or not self.bag:
+            self.bag = list(SHAPES.keys())
+            random.shuffle(self.bag)
+        shape = self.bag.pop()
+        return Piece(self.cols // 2 - 2, 0, shape)
 
     def valid_space(self, piece):
         format = piece.get_format()
