@@ -129,7 +129,22 @@ class TetrisLogic:
     def rotate(self):
         if self.game_over: return
         self.current_piece.rotation += 1
-        if not self.valid_space(self.current_piece): self.current_piece.rotation -= 1 
+        if self.valid_space(self.current_piece):
+            return
+            
+        # Wall kick logic (try shifting left, right, up, double left, double right)
+        kick_offsets = [(-1, 0), (1, 0), (0, -1), (-2, 0), (2, 0), (-1, -1), (1, -1)]
+        for dx, dy in kick_offsets:
+            self.current_piece.x += dx
+            self.current_piece.y += dy
+            if self.valid_space(self.current_piece):
+                return
+            # Revert shift if invalid
+            self.current_piece.x -= dx
+            self.current_piece.y -= dy
+            
+        # Revert rotation if all kicks fail
+        self.current_piece.rotation -= 1
 
     def hard_drop(self):
         if self.game_over: return
