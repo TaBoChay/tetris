@@ -120,7 +120,12 @@ def draw_play_screen_solo(screen, mouse_pos, logic, particles, game_mode=None, b
         if game_mode == "BLITZ" and blitz_time <= 0:
             draw_glow_text(screen, "TIME'S UP!", title_font, YELLOW, WIDTH//2, HEIGHT//2 - 100)
         elif game_mode == "40L":
-            draw_glow_text(screen, f"LINES: {logic.lines}/40", main_font, CYAN, WIDTH//2, HEIGHT//2 - 100, align="center")
+            if logic.lines >= 40:
+                draw_glow_text(screen, "YOU WIN!", title_font, GREEN, WIDTH//2, HEIGHT//2 - 100)
+                draw_glow_text(screen, f"TIME: {blitz_time // 1000 // 60:02}:{blitz_time // 1000 % 60:02}", main_font, CYAN, WIDTH//2, HEIGHT//2 - 60, align="center")
+            else:
+                draw_glow_text(screen, "GAME OVER", title_font, RED, WIDTH//2, HEIGHT//2 - 100)
+                draw_glow_text(screen, f"LINES: {logic.lines}/40", main_font, CYAN, WIDTH//2, HEIGHT//2 - 60, align="center")
         else:
             draw_glow_text(screen, "GAME OVER", title_font, RED, WIDTH//2, HEIGHT//2 - 80)
         draw_glow_text(screen, f"FINAL SCORE: {logic.score}", main_font, YELLOW, WIDTH//2, HEIGHT//2 - 20)
