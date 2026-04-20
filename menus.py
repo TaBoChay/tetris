@@ -16,6 +16,8 @@ def draw_main_menu(screen, mouse_pos):
     b_about = draw_neon_button(screen, "ABOUT", start_x, 400, btn_w, btn_h, CYAN, mouse_pos)
     b_exit = draw_neon_button(screen, "EXIT", start_x, 470, btn_w, btn_h, RED, mouse_pos)
     
+    draw_glow_text(screen, "© 1984 Created by Alexey Pajitnov", small_font, GRAY, WIDTH//2, HEIGHT - 30)
+    
     return b_solo, b_multi, b_conf, b_about, b_exit
 
 def draw_about_menu(screen, mouse_pos):
