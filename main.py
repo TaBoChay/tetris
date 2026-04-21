@@ -7,7 +7,7 @@ from ui import *
 from menus import *
 from game_screens import *
 from tetris_logic import TetrisLogic
-from audio import init_audio, play_sfx, play_music, stop_music, update_audio_settings, set_master_volume
+from audio import init_audio, play_sfx, play_music, stop_music, update_audio_settings, set_master_volume, set_music_volume, set_sfx_volume
 from ai import TetrisAI
 
 # Helper: Check if key matches configured key
@@ -41,9 +41,10 @@ def main():
     clock = pygame.time.Clock()
     current_state = "MAIN_MENU"
     active_input = None
-    volume_dragging = None
+    volume_dragging = None   # None | (track_rect, "volume"|"music"|"sfx")
     keys_held = set()
     is_paused = False
+    paused_game_state = None  # lưu game state trước khi vo PAUSE_SOUND_MENU
 
     # --- DAS (Delayed Auto Shift) state ---
     # DAS delay: 10 frames @ 60fps = 167ms (Tetris standard)
@@ -65,6 +66,7 @@ def main():
     config_dirty = False
     init_audio()
     update_audio_settings(sys_config)
+    play_music("background")
 
     solo_logic = None
     fall_time = 0; particles = []
@@ -210,12 +212,20 @@ def main():
                 keys_held.add(event.key)
                 
                 if not is_repeat and event.key in (pygame.K_ESCAPE, pygame.K_p):
-                    if current_state in ("SOLO_GAME", "PVP_GAME"):
+                    if current_state == "PAUSE_SOUND_MENU":
+                        # ESC từ sound menu → quay về pause menu
+                        current_state = paused_game_state
+                        play_sfx("button")
+                    elif current_state in ("SOLO_GAME", "PVP_GAME"):
                         is_paused = not is_paused
                         # Reset DAS khi pause
                         if is_paused:
+                            paused_game_state = current_state
                             das_key = None; das_timer = 0; das_charged = False; das_arr_timer = 0
                             das_down_held = False; das_down_timer = 0
+                            pygame.mixer.music.pause()
+                        else:
+                            pygame.mixer.music.unpause()
                         play_sfx("button")
             elif event.type == pygame.KEYUP:
                 keys_held.discard(event.key)
@@ -363,24 +373,28 @@ def main():
                         play_sfx("button")
                     else:
                         # Xử lý volume slider click (bắt đầu kéo)
-                        if btns["volume_slider"]:
-                            track_rect, thumb_rect = btns["volume_slider"]
-                            if track_rect.collidepoint(mouse_pos) or thumb_rect.collidepoint(mouse_pos):
-                                volume_dragging = track_rect
-                                rel_x = mouse_pos[0] - track_rect.x
-                                ratio = max(0.0, min(1.0, rel_x / track_rect.width))
-                                new_vol = int(ratio * 100)
-                                sys_config["volume"] = new_vol
-                                config_dirty = True
-                                set_master_volume(new_vol)
-                        # Xử lý các toggle còn lại
-                        for cat in ["sfx", "brightness"]:
-                            for key, rect in btns[cat].items():
-                                if rect.collidepoint(mouse_pos):
-                                    sys_config[cat] = key
+                        for slider_key, cfg_key, apply_fn in [
+                            ("volume_slider", "volume", set_master_volume),
+                            ("music_slider", "music_volume", set_music_volume),
+                            ("sfx_slider", "sfx_volume", set_sfx_volume),
+                        ]:
+                            if btns[slider_key]:
+                                track_rect, thumb_rect = btns[slider_key]
+                                if track_rect.collidepoint(mouse_pos) or thumb_rect.collidepoint(mouse_pos):
+                                    volume_dragging = (track_rect, cfg_key, apply_fn)
+                                    rel_x = mouse_pos[0] - track_rect.x
+                                    ratio = max(0.0, min(1.0, rel_x / track_rect.width))
+                                    new_val = int(ratio * 100)
+                                    sys_config[cfg_key] = new_val
                                     config_dirty = True
-                                    update_audio_settings(sys_config)
-                                    play_sfx("button")
+                                    apply_fn(new_val)
+                        # Xử lý brightness toggle
+                        for key, rect in btns["brightness"].items():
+                            if rect.collidepoint(mouse_pos):
+                                sys_config["brightness"] = key
+                                config_dirty = True
+                                update_audio_settings(sys_config)
+                                play_sfx("button")
                         # Key config menu
                         if "keys" in btns and btns["keys"].collidepoint(mouse_pos):
                             current_state = "KEYCONFIG_MENU"
@@ -541,6 +555,7 @@ def main():
                     btns = draw_pause_menu(screen, mouse_pos, sys_config, current_state)
                     if btns["resume"] and btns["resume"].collidepoint(mouse_pos):
                         is_paused = False
+                        pygame.mixer.music.unpause()
                         play_sfx("button")
                     elif btns["quit"] and btns["quit"].collidepoint(mouse_pos):
                         is_paused = False
@@ -548,7 +563,12 @@ def main():
                         play_sfx("button")
                     elif btns.get("mode_select") and btns["mode_select"].collidepoint(mouse_pos):
                         is_paused = False
+                        pygame.mixer.music.unpause()
                         current_state = "SOLO_MENU" if current_state == "SOLO_GAME" else "PVP_SETTINGS"
+                        play_sfx("button")
+                    elif btns.get("sound") and btns["sound"].collidepoint(mouse_pos):
+                        paused_game_state = current_state
+                        current_state = "PAUSE_SOUND_MENU"
                         play_sfx("button")
                     elif btns["keys_solo"] and btns["keys_solo"].collidepoint(mouse_pos):
                         current_state = "KEYCONFIG_MENU"
@@ -568,16 +588,28 @@ def main():
                         rebinding_key_action = None
                         rebinding_key_from = "pause_pvp"
                         play_sfx("button")
-                    elif btns["volume_slider"]:
-                        track_rect, thumb_rect = btns["volume_slider"]
-                        if track_rect.collidepoint(mouse_pos) or thumb_rect.collidepoint(mouse_pos):
-                            volume_dragging = track_rect
-                            rel_x = mouse_pos[0] - track_rect.x
-                            ratio = max(0.0, min(1.0, rel_x / track_rect.width))
-                            new_vol = int(ratio * 100)
-                            sys_config["volume"] = new_vol
-                            config_dirty = True
-                            set_master_volume(new_vol)
+
+                elif current_state == "PAUSE_SOUND_MENU":
+                    btns = draw_pause_sound_menu(screen, mouse_pos, sys_config)
+                    if btns.get("back") and btns["back"].collidepoint(mouse_pos):
+                        current_state = paused_game_state
+                        play_sfx("button")
+                    else:
+                        for slider_key, cfg_key, apply_fn in [
+                            ("volume_slider", "volume", set_master_volume),
+                            ("music_slider", "music_volume", set_music_volume),
+                            ("sfx_slider", "sfx_volume", set_sfx_volume),
+                        ]:
+                            if btns[slider_key]:
+                                track_rect, thumb_rect = btns[slider_key]
+                                if track_rect.collidepoint(mouse_pos) or thumb_rect.collidepoint(mouse_pos):
+                                    volume_dragging = (track_rect, cfg_key, apply_fn)
+                                    rel_x = mouse_pos[0] - track_rect.x
+                                    ratio = max(0.0, min(1.0, rel_x / track_rect.width))
+                                    new_val = int(ratio * 100)
+                                    sys_config[cfg_key] = new_val
+                                    config_dirty = True
+                                    apply_fn(new_val)
                             
                 elif current_state == "SOLO_GAME" and not is_paused:
                     btns = draw_play_screen_solo(screen, mouse_pos, solo_logic, particles, game_mode, blitz_time,
@@ -640,14 +672,14 @@ def main():
 
             if event.type == pygame.MOUSEMOTION:
                 if volume_dragging is not None:
-                    track_rect = volume_dragging
+                    track_rect, cfg_key, apply_fn = volume_dragging
                     rel_x = mouse_pos[0] - track_rect.x
                     ratio = max(0.0, min(1.0, rel_x / track_rect.width))
-                    new_vol = int(ratio * 100)
-                    if sys_config["volume"] != new_vol:
-                        sys_config["volume"] = new_vol
+                    new_val = int(ratio * 100)
+                    if sys_config.get(cfg_key) != new_val:
+                        sys_config[cfg_key] = new_val
                         config_dirty = True
-                        set_master_volume(new_vol)
+                        apply_fn(new_val)
             if event.type == pygame.MOUSEBUTTONUP:
                 volume_dragging = None
 
@@ -674,6 +706,16 @@ def main():
 
         if current_state in ("SOLO_GAME", "PVP_GAME") and is_paused:
             draw_pause_menu(screen, mouse_pos, sys_config, current_state)
+        elif current_state == "PAUSE_SOUND_MENU":
+            # Vẽ game nền + overlay rồi draw sound menu lên trên
+            if paused_game_state == "SOLO_GAME":
+                draw_play_screen_solo(screen, mouse_pos, solo_logic, particles, game_mode, blitz_time,
+                                     keys_config=solo_config.get("keys", DEFAULT_SOLO_KEYS))
+            elif paused_game_state == "PVP_GAME":
+                draw_pvp_screen(screen, mouse_pos, pvp_config, p1_logic, p2_logic, p1_particles, p2_particles,
+                                p1_keys=pvp_config.get("p1_keys", DEFAULT_PVP_P1_KEYS),
+                                p2_keys=pvp_config.get("p2_keys", DEFAULT_PVP_P2_KEYS))
+            draw_pause_sound_menu(screen, mouse_pos, sys_config)
 
         if config_dirty:
             save_user_config({"sys": sys_config, "solo": solo_config, "pvp": pvp_config})

@@ -21,7 +21,7 @@ ORANGE = (230, 126, 34)
 BLUE = (52, 152, 219)
 
 CONFIG_FILE = Path(__file__).resolve().parent / "tetris_config.json"
-DEFAULT_SYS_CONFIG = {"volume": 80, "sfx": "on", "music": "on", "brightness": "normal"}
+DEFAULT_SYS_CONFIG = {"volume": 80, "music_volume": 70, "sfx_volume": 80, "sfx": "on", "music": "on", "brightness": "normal"}
 
 # Default key mappings for SOLO mode (arrow keys)
 DEFAULT_SOLO_KEYS = {

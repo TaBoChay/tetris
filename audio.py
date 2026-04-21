@@ -16,6 +16,8 @@ _available = False
 _sounds = {}
 _current_music = None
 _master_volume = 0.8  # 0-1 float, default 80%
+_music_volume = 0.7   # 0-1 float, default 70%
+_sfx_volume = 0.8     # 0-1 float, default 80%
 _sfx_enabled = True
 _music_enabled = True
 
@@ -100,7 +102,7 @@ def _load_sounds():
     for key, path in file_map.items():
         try:
             _sounds[key] = pygame.mixer.Sound(str(path))
-            _sounds[key].set_volume(_master_volume)
+            _sounds[key].set_volume(_master_volume * _sfx_volume)
         except Exception:
             _sounds[key] = None
 
@@ -127,10 +129,30 @@ def set_master_volume(volume_percent):
     _master_volume = max(0.0, min(1.0, volume_percent / 100.0))
     if not _available:
         return
-    pygame.mixer.music.set_volume(_master_volume)
+    pygame.mixer.music.set_volume(_master_volume * _music_volume)
     for sound in _sounds.values():
         if sound:
-            sound.set_volume(_master_volume)
+            sound.set_volume(_master_volume * _sfx_volume)
+
+
+def set_music_volume(volume_percent):
+    # Set music (nhạc nền) volume riêng, 0-100 int
+    global _music_volume
+    _music_volume = max(0.0, min(1.0, volume_percent / 100.0))
+    if not _available:
+        return
+    pygame.mixer.music.set_volume(_master_volume * _music_volume)
+
+
+def set_sfx_volume(volume_percent):
+    # Set SFX volume riêng, 0-100 int
+    global _sfx_volume
+    _sfx_volume = max(0.0, min(1.0, volume_percent / 100.0))
+    if not _available:
+        return
+    for sound in _sounds.values():
+        if sound:
+            sound.set_volume(_master_volume * _sfx_volume)
 
 
 def set_sfx_enabled(enabled):
@@ -153,7 +175,7 @@ def set_music_enabled(enabled):
 
 def play_sfx(name):
     # Phát một hiệu ứng âm thanh (SFX) theo tên (vd: 'move', 'clear').
-    if not _available or not _sfx_enabled or _master_volume == 0:
+    if not _available or not _sfx_enabled or (_master_volume * _sfx_volume) == 0:
         return
     sound = _sounds.get(name)
     if sound:
@@ -163,7 +185,7 @@ def play_sfx(name):
 def play_music(track_name="background", loops=-1):
     """Phát nhạc nền lặp lại vô hạn. Tự tạo nhạc mặc định nếu không tìm thấy file."""
     global _current_music
-    if not _available or not _music_enabled or _master_volume == 0:
+    if not _available or not _music_enabled:
         return
     extensions = ['.mp4', '.mp3', '.wav', '.ogg', '.m4a']
     track_path = None
@@ -172,10 +194,11 @@ def play_music(track_name="background", loops=-1):
         if path.exists():
             track_path = path
             break
+    eff_vol = _master_volume * _music_volume
     if track_path:
         try:
             pygame.mixer.music.load(str(track_path))
-            pygame.mixer.music.set_volume(_master_volume)
+            pygame.mixer.music.set_volume(eff_vol)
             pygame.mixer.music.play(loops)
             _current_music = track_name
         except Exception as e:
@@ -192,8 +215,9 @@ def play_music(track_name="background", loops=-1):
                 music_samples = _make_samples(mix, 8.0, volume=0.26, waveform="triangle", channels=2)
                 _write_wav(default_path, music_samples, channels=2)
             try:
+                eff_vol = _master_volume * _music_volume
                 pygame.mixer.music.load(str(default_path))
-                pygame.mixer.music.set_volume(_master_volume)
+                pygame.mixer.music.set_volume(eff_vol)
                 pygame.mixer.music.play(loops)
                 _current_music = track_name
             except Exception:
@@ -207,12 +231,21 @@ def stop_music():
 
 
 def update_audio_settings(config):
-     """Cập nhật các thiết lập âm thanh (volume, SFX, music) từ bộ cấu hình hệ thống."""
+     """Cập nhật các thiết lập âm thanh (volume, music, SFX) từ bộ cấu hình hệ thống."""
      vol = config.get("volume", 80)
      if isinstance(vol, str):
          vol = 100 if vol == "on" else 0
      set_master_volume(vol)
-     set_sfx_enabled(config.get("sfx", "on") == "on")
+     music_vol = config.get("music_volume", 70)
+     if isinstance(music_vol, str):
+         music_vol = 70
+     set_music_volume(music_vol)
+     sfx_vol = config.get("sfx_volume", 80)
+     if isinstance(sfx_vol, str):
+         sfx_vol = 0 if sfx_vol == "off" else 80
+     set_sfx_volume(sfx_vol)
+     # SFX luôn bật — slider kiểm soát volume, không cần toggle nữa
+     set_sfx_enabled(True)
      set_music_enabled(config.get("music", "on") == "on")
 
 def apply_volume_only(volume_value):
