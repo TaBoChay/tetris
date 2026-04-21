@@ -74,6 +74,9 @@ def main():
     blitz_time = 0
     solo_clear_played = False
     solo_game_over_sounded = False
+    GAME_OVER_DELAY = 600  # ms delay trước khi hiện game over overlay
+    solo_game_over_timer = 0  # đếm thời gian sau khi game_over = True
+    pvp_game_over_timer = 0
     
     # Key rebinding state
     rebinding_key_mode = None  # "solo", "pvp_p1", or "pvp_p2"
@@ -132,6 +135,10 @@ def main():
                 if solo_logic.game_over and not solo_game_over_sounded:
                     play_sfx("game_over")
                     solo_game_over_sounded = True
+
+                # Tích luỹ timer delay trước khi hiện game over overlay
+                if solo_logic.game_over:
+                    solo_game_over_timer += dt
 
                 spawn_particles(solo_logic, particles, -1, 540 // solo_logic.rows)
                 for p in particles[:]:
@@ -204,6 +211,10 @@ def main():
                 if game_ended and not p2_game_over_sounded:
                     play_sfx("game_over")
                     p2_game_over_sounded = True
+
+                # Tích luỹ timer delay trước khi hiện pvp game over overlay
+                if game_ended:
+                    pvp_game_over_timer += dt
 
         for event in pygame.event.get():
             is_repeat = False
@@ -451,7 +462,8 @@ def main():
                     elif b_40l.collidepoint(mouse_pos):
                         config_40l = {
                             "level": "1", "grid": "10x20", "ghost": "on", "hold": "on",
-                            "level_up": "off", "keys": solo_config.get("keys", DEFAULT_SOLO_KEYS)
+                            "level_up": "off",
+                            "keys": solo_config.get("keys", DEFAULT_SOLO_KEYS)
                         }
                         solo_logic = TetrisLogic(config_40l)
                         fall_time = 0; particles.clear()
@@ -459,6 +471,7 @@ def main():
                         blitz_time = 0
                         solo_clear_played = False
                         solo_game_over_sounded = False
+                        solo_game_over_timer = 0
                         current_state = "SOLO_GAME"
                         play_sfx("button")
                     elif b_blitz.collidepoint(mouse_pos):
@@ -472,6 +485,7 @@ def main():
                         blitz_time = 120000
                         solo_clear_played = False
                         solo_game_over_sounded = False
+                        solo_game_over_timer = 0
                         current_state = "SOLO_GAME"
                         play_sfx("button")
                     elif b_custom.collidepoint(mouse_pos):
@@ -488,6 +502,7 @@ def main():
                         fall_time = 0; particles.clear()
                         solo_clear_played = False
                         solo_game_over_sounded = False
+                        solo_game_over_timer = 0
                         game_mode = None
                         blitz_time = 0
                         current_state = "SOLO_GAME"
@@ -515,6 +530,7 @@ def main():
                             p1_particles.clear(); p2_particles.clear()
                             p1_game_over_sounded = False
                             p2_game_over_sounded = False
+                            pvp_game_over_timer = 0
                             current_state = "PVP_GAME"
                             play_sfx("button")
                         else:
@@ -612,8 +628,10 @@ def main():
                                     apply_fn(new_val)
                             
                 elif current_state == "SOLO_GAME" and not is_paused:
+                    show_go = (solo_game_over_timer >= GAME_OVER_DELAY)
                     btns = draw_play_screen_solo(screen, mouse_pos, solo_logic, particles, game_mode, blitz_time,
-                                                  keys_config=solo_config.get("keys", DEFAULT_SOLO_KEYS))
+                                                  keys_config=solo_config.get("keys", DEFAULT_SOLO_KEYS),
+                                                  show_game_over=show_go)
                     if btns["menu"] and btns["menu"].collidepoint(mouse_pos):
                         game_mode = None
                         current_state = "MAIN_MENU"
@@ -641,14 +659,17 @@ def main():
                         solo_logic = TetrisLogic(cfg)
                         fall_time = 0; particles.clear()
                         solo_clear_played = False
-                        solo_game_over_sounded = False  # Bug fix: reset sound flag khi retry
+                        solo_game_over_sounded = False
+                        solo_game_over_timer = 0  # reset timer khi retry
                         if game_mode == "BLITZ": blitz_time = 120000
                         elif game_mode == "40L": blitz_time = 0
 
                 elif current_state == "PVP_GAME" and not is_paused:
+                    show_go = (pvp_game_over_timer >= GAME_OVER_DELAY)
                     btns = draw_pvp_screen(screen, mouse_pos, pvp_config, p1_logic, p2_logic, p1_particles, p2_particles,
                                            p1_keys=pvp_config.get("p1_keys", DEFAULT_PVP_P1_KEYS),
-                                           p2_keys=pvp_config.get("p2_keys", DEFAULT_PVP_P2_KEYS))
+                                           p2_keys=pvp_config.get("p2_keys", DEFAULT_PVP_P2_KEYS),
+                                           show_game_over=show_go)
                     if btns["menu"] and btns["menu"].collidepoint(mouse_pos): 
                         current_state = "MAIN_MENU"
                         play_sfx("button")
@@ -669,6 +690,7 @@ def main():
                         # Bug fix: reset sound flags khi retry
                         p1_game_over_sounded = False
                         p2_game_over_sounded = False
+                        pvp_game_over_timer = 0  # reset timer khi retry
 
             if event.type == pygame.MOUSEMOTION:
                 if volume_dragging is not None:
@@ -698,11 +720,17 @@ def main():
         elif current_state == "SOLO_MENU": draw_solo_menu(screen, mouse_pos)
         elif current_state == "SOLO_CUSTOM_MENU": draw_solo_custom_menu(screen, mouse_pos, solo_config)
         elif current_state == "PVP_SETTINGS": draw_pvp_settings(screen, mouse_pos, pvp_config, active_input)
-        elif current_state == "SOLO_GAME": draw_play_screen_solo(screen, mouse_pos, solo_logic, particles, game_mode, blitz_time,
-                                                                    keys_config=solo_config.get("keys", DEFAULT_SOLO_KEYS))
-        elif current_state == "PVP_GAME": draw_pvp_screen(screen, mouse_pos, pvp_config, p1_logic, p2_logic, p1_particles, p2_particles,
-                                                          p1_keys=pvp_config.get("p1_keys", DEFAULT_PVP_P1_KEYS),
-                                                          p2_keys=pvp_config.get("p2_keys", DEFAULT_PVP_P2_KEYS))
+        elif current_state == "SOLO_GAME":
+            show_go = (solo_game_over_timer >= GAME_OVER_DELAY)
+            draw_play_screen_solo(screen, mouse_pos, solo_logic, particles, game_mode, blitz_time,
+                                  keys_config=solo_config.get("keys", DEFAULT_SOLO_KEYS),
+                                  show_game_over=show_go)
+        elif current_state == "PVP_GAME":
+            show_go = (pvp_game_over_timer >= GAME_OVER_DELAY)
+            draw_pvp_screen(screen, mouse_pos, pvp_config, p1_logic, p2_logic, p1_particles, p2_particles,
+                            p1_keys=pvp_config.get("p1_keys", DEFAULT_PVP_P1_KEYS),
+                            p2_keys=pvp_config.get("p2_keys", DEFAULT_PVP_P2_KEYS),
+                            show_game_over=show_go)
 
         if current_state in ("SOLO_GAME", "PVP_GAME") and is_paused:
             draw_pause_menu(screen, mouse_pos, sys_config, current_state)

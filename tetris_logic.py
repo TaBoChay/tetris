@@ -44,7 +44,8 @@ class TetrisLogic:
             self.bag = list(SHAPES.keys())
             random.shuffle(self.bag)
         shape = self.bag.pop()
-        return Piece(self.cols // 2 - 2, 0, shape)
+        # Spawn 1 hàng trên lưới (buffer zone), chuẩn Tetris, để piece thấy được 1 khoảnh trước khi game over
+        return Piece(self.cols // 2 - 2, -1, shape)
 
     def valid_space(self, piece):
         """

@@ -1,15 +1,15 @@
 {
   "sys": {
-    "volume": 24,
-    "music_volume": 0,
-    "sfx_volume": 11,
+    "volume": 31,
+    "music_volume": 70,
+    "sfx_volume": 80,
     "sfx": "on",
     "music": "on",
     "brightness": "normal"
   },
   "solo": {
-    "level": "15",
-    "grid": "12x25",
+    "level": "1",
+    "grid": "8x15",
     "ghost": "on",
     "hold": "on",
     "level_up": "on",
@@ -23,12 +23,12 @@
     }
   },
   "pvp": {
-    "level": "5",
-    "grid": "8x15",
-    "ai_diff": "easy",
+    "level": "1",
+    "grid": "10x20",
+    "ai_diff": "normal",
     "ai_mode": "balanced",
     "p1_name": "PLAYER 1",
-    "p1_color": "gold",
+    "p1_color": "cyan",
     "p1_type": "human",
     "p2_name": "PLAYER 2",
     "p2_color": "pink",
@@ -39,7 +39,7 @@
       "move_down": "s",
       "rotate": "w",
       "hard_drop": "q",
-      "hold": "c"
+      "hold": "z"
     },
     "p2_keys": {
       "move_left": "left",
@@ -47,7 +47,7 @@
       "move_down": "down",
       "rotate": "up",
       "hard_drop": "space",
-      "hold": "1"
+      "hold": "slash"
     }
   }
 }

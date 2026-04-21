@@ -464,7 +464,7 @@ def draw_pause_menu(screen, mouse_pos, sys_config, game_state):
     btn_y = 220
     gap = 62
 
-    buttons["sound"] = draw_neon_button(screen, "♪ SOUND SETTINGS", btn_x, btn_y, btn_w, btn_h, PURPLE, mouse_pos)
+    buttons["sound"] = draw_neon_button(screen, "SFX SETTINGS", btn_x, btn_y, btn_w, btn_h, PURPLE, mouse_pos)
 
     if game_state == "SOLO_GAME":
         buttons["keys_solo"] = draw_neon_button(screen, "KEY BINDINGS", btn_x, btn_y + gap, btn_w, btn_h, GREEN, mouse_pos)
@@ -472,9 +472,9 @@ def draw_pause_menu(screen, mouse_pos, sys_config, game_state):
         buttons["keys_p1"] = draw_neon_button(screen, "P1 KEYS", btn_x, btn_y + gap, btn_w // 2 - 5, btn_h, GREEN, mouse_pos)
         buttons["keys_p2"] = draw_neon_button(screen, "P2 KEYS", WIDTH // 2 + 5, btn_y + gap, btn_w // 2 - 5, btn_h, PINK, mouse_pos)
 
-    buttons["resume"]      = draw_neon_button(screen, "▶  RESUME",     btn_x, btn_y + gap * 2, btn_w, btn_h, YELLOW, mouse_pos)
-    buttons["mode_select"] = draw_neon_button(screen, "◀  MODE SELECT", btn_x, btn_y + gap * 3, btn_w, btn_h, CYAN,   mouse_pos)
-    buttons["quit"]        = draw_neon_button(screen, "✕  QUIT TO MENU", btn_x, btn_y + gap * 4, btn_w, btn_h, RED,    mouse_pos)
+    buttons["resume"]      = draw_neon_button(screen, ">> RESUME",      btn_x, btn_y + gap * 2, btn_w, btn_h, YELLOW, mouse_pos)
+    buttons["mode_select"] = draw_neon_button(screen, "<< MODE SELECT", btn_x, btn_y + gap * 3, btn_w, btn_h, CYAN,   mouse_pos)
+    buttons["quit"]        = draw_neon_button(screen, "X  QUIT TO MENU", btn_x, btn_y + gap * 4, btn_w, btn_h, RED,    mouse_pos)
 
     return buttons
 
@@ -530,5 +530,5 @@ def draw_pause_sound_menu(screen, mouse_pos, sys_config):
     buttons["sfx_slider"] = draw_slider(screen, panel_x + 60, sfx_y + 58, panel_w - 120, 14, 0, 100, sfx_value, PINK, WHITE, mouse_pos)
     draw_glow_text(screen, f"{sfx_value}%", small_font, WHITE, panel_x + panel_w - 40, sfx_y + 58, align="center")
 
-    buttons["back"] = draw_neon_button(screen, "◀  BACK", WIDTH // 2 - 100, sfx_y + 115, 200, 50, GRAY, mouse_pos)
+    buttons["back"] = draw_neon_button(screen, "<< BACK", WIDTH // 2 - 100, sfx_y + 115, 200, 50, GRAY, mouse_pos)
     return buttons

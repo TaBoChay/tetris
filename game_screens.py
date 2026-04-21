@@ -8,7 +8,7 @@ def _key_label(keys_config, action, fallback="?"):
     key_name = keys_config.get(action, fallback)
     return get_key_display_name(get_key_constant(key_name))
 
-def draw_play_screen_solo(screen, mouse_pos, logic, particles, game_mode=None, blitz_time=0, keys_config=None):
+def draw_play_screen_solo(screen, mouse_pos, logic, particles, game_mode=None, blitz_time=0, keys_config=None, show_game_over=True):
     # Vẽ màn hình chơi game
     screen.fill(BG_COLOR)
     if game_mode == "40L":
@@ -56,7 +56,8 @@ def draw_play_screen_solo(screen, mouse_pos, logic, particles, game_mode=None, b
                         pygame.draw.rect(s, (*ghost.color, 180), inner_rect, 1, border_radius=2)
                         screen.blit(s, (px, py))
 
-    if not logic.game_over:
+    # Vẽ current piece - luôn vẽ trong 600ms delay để player thấy gạch bị kẹt (tô đỏ)
+    if not logic.game_over or not show_game_over:
         piece = logic.current_piece
         for i, line in enumerate(piece.get_format()):
             for j, cell in enumerate(line):
@@ -66,7 +67,10 @@ def draw_play_screen_solo(screen, mouse_pos, logic, particles, game_mode=None, b
                     if py >= board_y:
                         rect = pygame.Rect(px, py, block_size, block_size)
                         inner_rect = rect.inflate(-2, -2)
-                        pygame.draw.rect(screen, piece.color, inner_rect, border_radius=2)
+                        # Nếu game over và đang trong delay: tô đỏ để báo hiệu bị kẹt
+                        color = (220, 50, 50) if logic.game_over else piece.color
+                        pygame.draw.rect(screen, color, inner_rect, border_radius=2)
+
 
     for p in particles:
         p.draw(screen)
@@ -130,7 +134,7 @@ def draw_play_screen_solo(screen, mouse_pos, logic, particles, game_mode=None, b
 
     buttons = {"menu": None, "retry": None, "pause": None, "mode_select": None}
 
-    if logic.game_over:
+    if logic.game_over and show_game_over:
         overlay = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
         overlay.fill((0, 0, 0, 200))
         screen.blit(overlay, (0, 0))
@@ -154,13 +158,13 @@ def draw_play_screen_solo(screen, mouse_pos, logic, particles, game_mode=None, b
         buttons["retry"] = draw_neon_button(screen, "RETRY", start_x, HEIGHT//2 + 35, btn_w, btn_h, GREEN, mouse_pos)
         buttons["mode_select"] = draw_neon_button(screen, "MODE SELECT", start_x + btn_w + 20, HEIGHT//2 + 35, btn_w, btn_h, CYAN, mouse_pos)
         buttons["menu"] = draw_neon_button(screen, "MAIN MENU", start_x + (btn_w + 20)*2, HEIGHT//2 + 35, btn_w, btn_h, PINK, mouse_pos)
-    else:
+    elif not logic.game_over:
         buttons["pause"] = draw_neon_button(screen, "PAUSE", WIDTH - 140, 20, 100, 40, PINK, mouse_pos)
 
     return buttons
 
 
-def draw_pvp_screen(screen, mouse_pos, pvp_config, logic1, logic2, particles1, particles2, p1_keys=None, p2_keys=None):
+def draw_pvp_screen(screen, mouse_pos, pvp_config, logic1, logic2, particles1, particles2, p1_keys=None, p2_keys=None, show_game_over=True):
     # Vẽ màn hình chơi game cho chế độ PvP (2 người chơi cạnh nhau).
     # Hiển thị hai bảng lưới riêng biệt, thông tin điểm số, combo và phần hướng dẫn phím.
     screen.fill(BG_COLOR)
@@ -291,7 +295,7 @@ def draw_pvp_screen(screen, mouse_pos, pvp_config, logic1, logic2, particles1, p
 
     buttons = {"menu": None, "retry": None, "pause": None, "mode_select": None}
 
-    if logic1.game_over or logic2.game_over:
+    if (logic1.game_over or logic2.game_over) and show_game_over:
         win_text = pvp_config["p2_name"] + " WINS!" if logic1.game_over else pvp_config["p1_name"] + " WINS!"
         draw_glow_text(screen, win_text, title_font, YELLOW, WIDTH//2, HEIGHT//2 - 30)
         btn_w, btn_h = 180, 48
