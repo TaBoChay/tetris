@@ -1,7 +1,9 @@
 {
   "sys": {
-    "volume": 61,
-    "sfx": "off",
+    "volume": 24,
+    "music_volume": 0,
+    "sfx_volume": 11,
+    "sfx": "on",
     "music": "on",
     "brightness": "normal"
   },
@@ -21,7 +23,7 @@
     }
   },
   "pvp": {
-    "level": "15",
+    "level": "5",
     "grid": "8x15",
     "ai_diff": "easy",
     "ai_mode": "balanced",
