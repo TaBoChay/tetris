@@ -137,52 +137,68 @@ def draw_solo_custom_menu(screen, mouse_pos, config):
     return buttons
 
 def draw_config_menu(screen, mouse_pos, sys_config):
-    """Vẽ màn hình cài đặt hệ thống (Volume, SFX, Brightness)."""
+    """Vẽ màn hình cài đặt hệ thống (Volume, Music, SFX, Brightness)."""
     screen.fill(BG_COLOR)
     for block in floating_blocks: block.update(); block.draw(screen)
     btn_back = draw_neon_button(screen, "< BACK", 30, 30, 120, 40, PINK, mouse_pos)
     draw_glow_text(screen, "SETTINGS", title_font, CYAN, WIDTH//2, 50)
     draw_glow_text(screen, "System Configuration", small_font, PINK, WIDTH//2, 90)
 
-    buttons = {"volume_slider": None, "sfx": {}, "brightness": {}}
+    buttons = {"volume_slider": None, "music_slider": None, "sfx_slider": None, "brightness": {}}
     panel_w = 460; panel_x = (WIDTH - panel_w) // 2
 
-    # VOLUME SLIDER
-    vol_y = 130
-    vol_surf = pygame.Surface((panel_w, 100), pygame.SRCALPHA)
+    # MASTER VOLUME SLIDER
+    vol_y = 115
+    vol_surf = pygame.Surface((panel_w, 80), pygame.SRCALPHA)
     pygame.draw.rect(vol_surf, (*CYAN, 30), vol_surf.get_rect(), border_radius=8)
     screen.blit(vol_surf, (panel_x, vol_y))
-    pygame.draw.rect(screen, CYAN, (panel_x, vol_y, panel_w, 100), 2, border_radius=8)
-    draw_glow_text(screen, "MASTER VOLUME", main_font, CYAN, WIDTH//2, vol_y + 25, align="center")
+    pygame.draw.rect(screen, CYAN, (panel_x, vol_y, panel_w, 80), 2, border_radius=8)
+    draw_glow_text(screen, "MASTER VOLUME", main_font, CYAN, WIDTH//2, vol_y + 20, align="center")
     vol_value = sys_config.get("volume", 80)
     if isinstance(vol_value, str):
         vol_value = 100 if vol_value == "on" else 0
-    buttons["volume_slider"] = draw_slider(screen, panel_x + 60, vol_y + 55, panel_w - 120, 12, 0, 100, vol_value, CYAN, WHITE, mouse_pos)
-    draw_glow_text(screen, f"{vol_value}%", small_font, WHITE, WIDTH//2, vol_y + 85, align="center")
+    buttons["volume_slider"] = draw_slider(screen, panel_x + 60, vol_y + 45, panel_w - 120, 12, 0, 100, vol_value, CYAN, WHITE, mouse_pos)
+    draw_glow_text(screen, f"{vol_value}%", small_font, WHITE, panel_x + panel_w - 45, vol_y + 45, align="center")
 
-    # SFX TOGGLE
-    sfx_y = vol_y + 120
-    sfx_surf = pygame.Surface((panel_w, 100), pygame.SRCALPHA)
+    # MUSIC SLIDER
+    music_y = vol_y + 95
+    music_surf = pygame.Surface((panel_w, 80), pygame.SRCALPHA)
+    pygame.draw.rect(music_surf, (*PURPLE, 30), music_surf.get_rect(), border_radius=8)
+    screen.blit(music_surf, (panel_x, music_y))
+    pygame.draw.rect(screen, PURPLE, (panel_x, music_y, panel_w, 80), 2, border_radius=8)
+    draw_glow_text(screen, "MUSIC", main_font, PURPLE, WIDTH//2, music_y + 20, align="center")
+    music_value = sys_config.get("music_volume", 70)
+    if isinstance(music_value, str):
+        music_value = 70
+    buttons["music_slider"] = draw_slider(screen, panel_x + 60, music_y + 45, panel_w - 120, 12, 0, 100, music_value, PURPLE, WHITE, mouse_pos)
+    draw_glow_text(screen, f"{music_value}%", small_font, WHITE, panel_x + panel_w - 45, music_y + 45, align="center")
+
+    # SFX SLIDER
+    sfx_y = music_y + 95
+    sfx_surf = pygame.Surface((panel_w, 80), pygame.SRCALPHA)
     pygame.draw.rect(sfx_surf, (*PINK, 30), sfx_surf.get_rect(), border_radius=8)
     screen.blit(sfx_surf, (panel_x, sfx_y))
-    pygame.draw.rect(screen, PINK, (panel_x, sfx_y, panel_w, 100), 2, border_radius=8)
-    draw_glow_text(screen, "SOUND EFFECTS", main_font, PINK, WIDTH//2, sfx_y + 25, align="center")
-    buttons["sfx"]["on"] = draw_toggle_button(screen, "ON", WIDTH//2 - 90, sfx_y + 50, 80, 35, GREEN, mouse_pos, sys_config["sfx"] == "on")
-    buttons["sfx"]["off"] = draw_toggle_button(screen, "OFF", WIDTH//2 + 10, sfx_y + 50, 80, 35, RED, mouse_pos, sys_config["sfx"] == "off")
+    pygame.draw.rect(screen, PINK, (panel_x, sfx_y, panel_w, 80), 2, border_radius=8)
+    draw_glow_text(screen, "SOUND EFFECTS", main_font, PINK, WIDTH//2, sfx_y + 20, align="center")
+    sfx_value = sys_config.get("sfx_volume", 80)
+    if isinstance(sfx_value, str):
+        sfx_value = 0 if sfx_value == "off" else 80
+    buttons["sfx_slider"] = draw_slider(screen, panel_x + 60, sfx_y + 45, panel_w - 120, 12, 0, 100, sfx_value, PINK, WHITE, mouse_pos)
+    draw_glow_text(screen, f"{sfx_value}%", small_font, WHITE, panel_x + panel_w - 45, sfx_y + 45, align="center")
 
     # BRIGHTNESS
-    bri_y = sfx_y + 120
-    bri_surf = pygame.Surface((panel_w, 100), pygame.SRCALPHA)
+    bri_y = sfx_y + 95
+    bri_surf = pygame.Surface((panel_w, 80), pygame.SRCALPHA)
     pygame.draw.rect(bri_surf, (*YELLOW, 30), bri_surf.get_rect(), border_radius=8)
     screen.blit(bri_surf, (panel_x, bri_y))
-    pygame.draw.rect(screen, YELLOW, (panel_x, bri_y, panel_w, 100), 2, border_radius=8)
-    draw_glow_text(screen, "BRIGHTNESS", main_font, YELLOW, WIDTH//2, bri_y + 25, align="center")
-    buttons["brightness"]["dim"] = draw_toggle_button(screen, "DIM", WIDTH//2 - 165, bri_y + 50, 100, 35, PURPLE, mouse_pos, sys_config["brightness"] == "dim")
-    buttons["brightness"]["normal"] = draw_toggle_button(screen, "NORMAL", WIDTH//2 - 50, bri_y + 50, 100, 35, YELLOW, mouse_pos, sys_config["brightness"] == "normal")
-    buttons["brightness"]["bright"] = draw_toggle_button(screen, "BRIGHT", WIDTH//2 + 65, bri_y + 50, 100, 35, CYAN, mouse_pos, sys_config["brightness"] == "bright")
+    pygame.draw.rect(screen, YELLOW, (panel_x, bri_y, panel_w, 80), 2, border_radius=8)
+    draw_glow_text(screen, "BRIGHTNESS", main_font, YELLOW, WIDTH//2, bri_y + 20, align="center")
+    buttons["brightness"]["dim"] = draw_toggle_button(screen, "DIM", WIDTH//2 - 165, bri_y + 38, 100, 30, PURPLE, mouse_pos, sys_config["brightness"] == "dim")
+    buttons["brightness"]["normal"] = draw_toggle_button(screen, "NORMAL", WIDTH//2 - 50, bri_y + 38, 100, 30, YELLOW, mouse_pos, sys_config["brightness"] == "normal")
+    buttons["brightness"]["bright"] = draw_toggle_button(screen, "BRIGHT", WIDTH//2 + 65, bri_y + 38, 100, 30, CYAN, mouse_pos, sys_config["brightness"] == "bright")
 
-    buttons["reset"] = draw_neon_button(screen, "RESET DEFAULTS", WIDTH//2 - 150, bri_y + 130, 300, 50, GRAY, mouse_pos)
-    buttons["keys"] = draw_neon_button(screen, "KEY BINDINGS >", WIDTH//2 - 150, bri_y + 190, 300, 50, CYAN, mouse_pos)
+    buttons["reset"] = draw_neon_button(screen, "RESET DEFAULTS", WIDTH//2 - 150, bri_y + 100, 300, 45, GRAY, mouse_pos)
+    buttons["keys"] = draw_neon_button(screen, "KEY BINDINGS >", WIDTH//2 - 150, bri_y + 155, 300, 45, CYAN, mouse_pos)
     return btn_back, buttons
 
 def draw_ai_mode_tooltip(screen, mouse_pos):
@@ -431,40 +447,88 @@ def draw_keyconfig_menu(screen, mouse_pos, mode, config, rebinding_key=None):
 
 def draw_pause_menu(screen, mouse_pos, sys_config, game_state):
     """
-    Vẽ màn hình Pause (tạm dừng) hiện đè lên trên game đang chạy.
-    Cho phép thay đổi âm lượng, tuỳ chỉnh phím, tiếp tục chơi hoặc thoát ra menu chính.
+    Vẽ màn hình Pause gọn — chỉ có các nút điều hướng.
+    Âm thanh tách sang màn hình PAUSE_SOUND_MENU riêng.
     """
     overlay = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
     overlay.fill((0, 0, 0, 180))
     screen.blit(overlay, (0, 0))
-    
-    draw_glow_text(screen, "PAUSED", title_font, CYAN, WIDTH//2, 100)
-    
-    buttons = {"volume_slider": None, "keys_solo": None, "keys_p1": None, "keys_p2": None, "resume": None, "mode_select": None, "quit": None}
-    
-    panel_w = 460
-    panel_x = (WIDTH - panel_w) // 2
-    
-    # VOLUME SLIDER
-    vol_y = 160
-    vol_surf = pygame.Surface((panel_w, 100), pygame.SRCALPHA)
-    pygame.draw.rect(vol_surf, (*CYAN, 30), vol_surf.get_rect(), border_radius=8)
-    screen.blit(vol_surf, (panel_x, vol_y))
-    pygame.draw.rect(screen, CYAN, (panel_x, vol_y, panel_w, 100), 2, border_radius=8)
-    draw_glow_text(screen, "MASTER VOLUME", main_font, CYAN, WIDTH//2, vol_y + 25, align="center")
-    vol_value = sys_config.get("volume", 80)
-    if isinstance(vol_value, str): vol_value = 100 if vol_value == "on" else 0
-    buttons["volume_slider"] = draw_slider(screen, panel_x + 60, vol_y + 55, panel_w - 120, 12, 0, 100, vol_value, CYAN, WHITE, mouse_pos)
-    draw_glow_text(screen, f"{vol_value}%", small_font, WHITE, WIDTH//2, vol_y + 85, align="center")
+
+    draw_glow_text(screen, "PAUSED", title_font, CYAN, WIDTH//2, 130)
+
+    buttons = {"sound": None, "keys_solo": None, "keys_p1": None, "keys_p2": None,
+               "resume": None, "mode_select": None, "quit": None}
+
+    btn_w, btn_h = 300, 52
+    btn_x = WIDTH // 2 - btn_w // 2
+    btn_y = 220
+    gap = 62
+
+    buttons["sound"] = draw_neon_button(screen, "SFX SETTINGS", btn_x, btn_y, btn_w, btn_h, PURPLE, mouse_pos)
 
     if game_state == "SOLO_GAME":
-        buttons["keys_solo"] = draw_neon_button(screen, "KEY BINDINGS", WIDTH//2 - 150, 290, 300, 50, GREEN, mouse_pos)
+        buttons["keys_solo"] = draw_neon_button(screen, "KEY BINDINGS", btn_x, btn_y + gap, btn_w, btn_h, GREEN, mouse_pos)
     else:
-        buttons["keys_p1"] = draw_neon_button(screen, "P1 KEYS", WIDTH//2 - 150, 290, 140, 50, GREEN, mouse_pos)
-        buttons["keys_p2"] = draw_neon_button(screen, "P2 KEYS", WIDTH//2 + 10, 290, 140, 50, PINK, mouse_pos)
+        buttons["keys_p1"] = draw_neon_button(screen, "P1 KEYS", btn_x, btn_y + gap, btn_w // 2 - 5, btn_h, GREEN, mouse_pos)
+        buttons["keys_p2"] = draw_neon_button(screen, "P2 KEYS", WIDTH // 2 + 5, btn_y + gap, btn_w // 2 - 5, btn_h, PINK, mouse_pos)
 
-    buttons["resume"] = draw_neon_button(screen, "RESUME", WIDTH//2 - 150, 360, 300, 50, YELLOW, mouse_pos)
-    buttons["mode_select"] = draw_neon_button(screen, "< MODE SELECT", WIDTH//2 - 150, 428, 300, 50, CYAN, mouse_pos)
-    buttons["quit"] = draw_neon_button(screen, "QUIT TO MENU", WIDTH//2 - 150, 496, 300, 50, RED, mouse_pos)
-    
+    buttons["resume"]      = draw_neon_button(screen, ">> RESUME",      btn_x, btn_y + gap * 2, btn_w, btn_h, YELLOW, mouse_pos)
+    buttons["mode_select"] = draw_neon_button(screen, "<< MODE SELECT", btn_x, btn_y + gap * 3, btn_w, btn_h, CYAN,   mouse_pos)
+    buttons["quit"]        = draw_neon_button(screen, "X  QUIT TO MENU", btn_x, btn_y + gap * 4, btn_w, btn_h, RED,    mouse_pos)
+
+    return buttons
+
+
+def draw_pause_sound_menu(screen, mouse_pos, sys_config):
+    """
+    Màn hình chỉnh âm thanh riêng khi game đang pause.
+    Hiển thị 3 thanh trượt: Master Volume, Music, SFX.
+    """
+    overlay = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
+    overlay.fill((0, 0, 0, 200))
+    screen.blit(overlay, (0, 0))
+
+    draw_glow_text(screen, "SOUND SETTINGS", title_font, PURPLE, WIDTH // 2, 70)
+
+    buttons = {"volume_slider": None, "music_slider": None, "sfx_slider": None, "back": None}
+    panel_w = 500
+    panel_x = (WIDTH - panel_w) // 2
+
+    # MASTER VOLUME
+    vol_y = 145
+    vol_surf = pygame.Surface((panel_w, 90), pygame.SRCALPHA)
+    pygame.draw.rect(vol_surf, (*CYAN, 35), vol_surf.get_rect(), border_radius=10)
+    screen.blit(vol_surf, (panel_x, vol_y))
+    pygame.draw.rect(screen, CYAN, (panel_x, vol_y, panel_w, 90), 2, border_radius=10)
+    draw_glow_text(screen, "MASTER VOLUME", main_font, CYAN, WIDTH // 2, vol_y + 22, align="center")
+    vol_value = sys_config.get("volume", 80)
+    if isinstance(vol_value, str): vol_value = 100 if vol_value == "on" else 0
+    buttons["volume_slider"] = draw_slider(screen, panel_x + 60, vol_y + 58, panel_w - 120, 14, 0, 100, vol_value, CYAN, WHITE, mouse_pos)
+    draw_glow_text(screen, f"{vol_value}%", small_font, WHITE, panel_x + panel_w - 40, vol_y + 58, align="center")
+
+    # MUSIC
+    music_y = vol_y + 110
+    music_surf = pygame.Surface((panel_w, 90), pygame.SRCALPHA)
+    pygame.draw.rect(music_surf, (*PURPLE, 35), music_surf.get_rect(), border_radius=10)
+    screen.blit(music_surf, (panel_x, music_y))
+    pygame.draw.rect(screen, PURPLE, (panel_x, music_y, panel_w, 90), 2, border_radius=10)
+    draw_glow_text(screen, "MUSIC", main_font, PURPLE, WIDTH // 2, music_y + 22, align="center")
+    music_value = sys_config.get("music_volume", 70)
+    if isinstance(music_value, str): music_value = 70
+    buttons["music_slider"] = draw_slider(screen, panel_x + 60, music_y + 58, panel_w - 120, 14, 0, 100, music_value, PURPLE, WHITE, mouse_pos)
+    draw_glow_text(screen, f"{music_value}%", small_font, WHITE, panel_x + panel_w - 40, music_y + 58, align="center")
+
+    # SFX
+    sfx_y = music_y + 110
+    sfx_surf = pygame.Surface((panel_w, 90), pygame.SRCALPHA)
+    pygame.draw.rect(sfx_surf, (*PINK, 35), sfx_surf.get_rect(), border_radius=10)
+    screen.blit(sfx_surf, (panel_x, sfx_y))
+    pygame.draw.rect(screen, PINK, (panel_x, sfx_y, panel_w, 90), 2, border_radius=10)
+    draw_glow_text(screen, "SOUND EFFECTS", main_font, PINK, WIDTH // 2, sfx_y + 22, align="center")
+    sfx_value = sys_config.get("sfx_volume", 80)
+    if isinstance(sfx_value, str): sfx_value = 0 if sfx_value == "off" else 80
+    buttons["sfx_slider"] = draw_slider(screen, panel_x + 60, sfx_y + 58, panel_w - 120, 14, 0, 100, sfx_value, PINK, WHITE, mouse_pos)
+    draw_glow_text(screen, f"{sfx_value}%", small_font, WHITE, panel_x + panel_w - 40, sfx_y + 58, align="center")
+
+    buttons["back"] = draw_neon_button(screen, "<< BACK", WIDTH // 2 - 100, sfx_y + 115, 200, 50, GRAY, mouse_pos)
     return buttons
