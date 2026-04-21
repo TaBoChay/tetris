@@ -1,12 +1,12 @@
 # 🎮 Tetris Cyberpunk Edition
 
-> Một phiên bản Tetris hiện đại với giao diện Cyberpunk/Neon, hỗ trợ chế độ PvP, AI đối kháng và âm nhạc động.
+> Một phiên bản Tetris hiện đại với giao diện Cyberpunk/Neon, hỗ trợ chế độ PvP, AI đối kháng, nhạc nền và âm thanh đầy đủ.
 
 ---
 
 ## 📸 Giới thiệu
 
-**Tetris Cyberpunk Edition** là trò chơi Tetris được xây dựng bằng Python và Pygame, lấy cảm hứng từ phong cách **Cyberpunk Neon** với hiệu ứng phát sáng, màu sắc rực rỡ và giao diện động. Game hỗ trợ nhiều chế độ chơi khác nhau bao gồm Solo, PvP (Người vs Người) và PvAI (Người vs AI).
+**Tetris Cyberpunk Edition** là trò chơi Tetris được xây dựng bằng Python và Pygame, lấy cảm hứng từ phong cách **Cyberpunk Neon** với hiệu ứng phát sáng, màu sắc rực rỡ và giao diện động. Game hỗ trợ nhiều chế độ chơi: Solo (40 Lines, Blitz, Custom), PvP (Người vs Người) và PvAI (Người vs AI).
 
 ---
 
@@ -15,11 +15,13 @@
 - 🕹️ **Nhiều chế độ chơi**: Solo (40 Lines, Blitz, Custom), PvP 2 người, PvAI
 - 🤖 **AI thông minh** với 3 kiểu tính cách: Balanced, Aggressive, Defensive
 - 🎨 **Giao diện Cyberpunk Neon** với hiệu ứng glow, particle và animation
-- 🎵 **Hệ thống âm thanh đầy đủ**: Nhạc nền, hiệu ứng SFX tự sinh
-- ⚙️ **Tuỳ chỉnh sâu**: Level, kích thước lưới, ghost piece, hold piece
+- 🎵 **Hệ thống âm thanh 3 kênh**: Master Volume · Music · Sound Effects — mỗi kênh có thanh trượt riêng
+- 🎶 **Nhạc nền tự động**: phát `background.mp3` (hoặc WAV/OGG) ngay khi khởi động, dừng/tiếp khi Pause
+- ⚙️ **Tuỳ chỉnh sâu**: Level khởi đầu, kích thước lưới, ghost piece, hold piece
 - ⌨️ **Phím điều khiển tuỳ biến** cho từng người chơi
-- 💾 **Lưu cấu hình tự động** vào file JSON
-- 📐 **Vật lý NES Tetris** — bảng tốc độ rơi chính xác theo từng level
+- 💾 **Lưu cấu hình tự động** vào `tetris_config.json`
+- 📐 **Vật lý NES Tetris** — bảng tốc độ rơi (gravity) chính xác theo từng level
+- ⚡ **DAS / ARR** — xử lý giữ phím di chuyển chuyên nghiệp, tốc độ tỉ lệ thuận với level
 
 ---
 
@@ -27,19 +29,19 @@
 
 ```
 Tetris/
-├── main.py            # Vòng lặp game chính, xử lý sự kiện và điều hướng màn hình
-├── menus.py           # Vẽ tất cả các màn hình menu (Main, Solo, PvP, Config, ...)
-├── game_screens.py    # Màn hình gameplay chính (Solo & PvP), vẽ lưới & HUD
-├── tetris_logic.py    # Logic cốt lõi của Tetris (di chuyển, xoay, xóa dòng, ...)
-├── ai.py              # Trí tuệ nhân tạo AI (thuật toán heuristic đánh giá lưới)
-├── audio.py           # Hệ thống âm thanh (sinh file WAV, phát nhạc & SFX)
-├── ui.py              # Các component UI tái sử dụng (nút, slider, font, ...)
-├── settings.py        # Hằng số, màu sắc, cấu hình mặc định, key mapping
-├── tetris_config.json # File lưu cấu hình người dùng (tự động tạo)
+├── main.py              # Vòng lặp game chính, xử lý sự kiện và điều hướng màn hình
+├── menus.py             # Vẽ tất cả các màn hình menu (Main, Solo, PvP, Config, Pause, Sound...)
+├── game_screens.py      # Màn hình gameplay (Solo & PvP), vẽ lưới & HUD
+├── tetris_logic.py      # Logic cốt lõi của Tetris (di chuyển, xoay, xóa dòng, garbage...)
+├── ai.py                # Trí tuệ nhân tạo (heuristic đánh giá lưới)
+├── audio.py             # Hệ thống âm thanh 3 kênh (Master/Music/SFX), sinh file WAV
+├── ui.py                # Component UI tái sử dụng (nút neon, slider, font, particle...)
+├── settings.py          # Hằng số, màu sắc, config mặc định, key mapping
+├── tetris_config.json   # Cấu hình người dùng (tự động tạo & lưu)
 ├── PressStart2P-Regular.ttf  # Font chữ Pixel game
 └── audio_assets/
-    ├── music/         # Nhạc nền (background.mp3, ambient.wav, cyberpunk.wav)
-    └── sfx/           # Hiệu ứng âm thanh (move, rotate, clear, game_over, ...)
+    ├── music/           # Nhạc nền — đặt background.mp3/wav/ogg vào đây
+    └── sfx/             # Hiệu ứng âm thanh (tự sinh nếu thiếu)
 ```
 
 ---
@@ -77,7 +79,7 @@ python main.py
 
 ## 🕹️ Điều khiển
 
-### Chế độ Solo
+### Chế độ Solo (mặc định)
 
 | Phím | Hành động |
 |------|-----------|
@@ -86,7 +88,7 @@ python main.py
 | `↑` | Xoay khối |
 | `Space` | Thả rơi ngay (Hard Drop) |
 | `Z` | Giữ khối (Hold) |
-| `P` hoặc `Esc` | Tạm dừng |
+| `P` hoặc `Esc` | Tạm dừng / Mở Pause Menu |
 
 ### Chế độ PvP — Người chơi 1 (mặc định WASD)
 
@@ -96,7 +98,7 @@ python main.py
 | `S` | Soft Drop |
 | `W` | Xoay khối |
 | `Q` | Hard Drop |
-| `Z` | Hold |
+| `C` | Hold |
 
 ### Chế độ PvP — Người chơi 2 (mặc định phím mũi tên)
 
@@ -106,40 +108,69 @@ python main.py
 | `↓` | Soft Drop |
 | `↑` | Xoay khối |
 | `Space` | Hard Drop |
-| `/` | Hold |
+| `1` | Hold |
 
-> 💡 Tất cả phím điều khiển có thể tuỳ chỉnh trong **Settings → Key Bindings**.
+> 💡 Tất cả phím điều khiển có thể tuỳ chỉnh trong **Settings → Key Bindings** hoặc ngay trong **Pause Menu**.
+
+---
+
+## ⏸️ Pause Menu
+
+Nhấn `P` hoặc `Esc` trong lúc chơi để mở menu tạm dừng:
+
+| Nút | Chức năng |
+|-----|-----------|
+| ♪ **SOUND SETTINGS** | Mở trang chỉnh âm thanh riêng (3 slider) |
+| **KEY BINDINGS** | Tuỳ chỉnh phím điều khiển ngay lập tức |
+| ▶ **RESUME** | Tiếp tục chơi (nhạc tự unpause) |
+| ◀ **MODE SELECT** | Quay về màn hình chọn chế độ |
+| ✕ **QUIT TO MENU** | Thoát về Main Menu |
+
+### Sound Settings (từ Pause)
+
+Điều chỉnh 3 thanh trượt âm thanh mà không cần thoát game:
+
+- 🔵 **Master Volume** — âm lượng tổng thể
+- 🟣 **Music** — âm lượng nhạc nền riêng
+- 🔴 **Sound Effects** — âm lượng hiệu ứng âm thanh riêng
+
+Nhấn `◀ BACK` hoặc `Esc` để quay về Pause Menu.
 
 ---
 
 ## 🤖 Chế độ AI
 
-Khi chọn PvP với một bên là AI, bạn có thể chọn:
+Khi chọn PvP với một bên là AI:
 
 ### Độ khó
-| Độ khó | Thời gian phản ứng |
-|--------|--------------------|
-| Easy | Chậm (~250ms/hành động) |
+| Độ khó | Tốc độ phản ứng |
+|--------|-----------------|
+| Easy   | Chậm (~250ms/hành động) |
 | Normal | Trung bình (~150ms/hành động) |
-| Hard | Nhanh (~85ms/hành động) |
+| Hard   | Nhanh (~85ms/hành động) |
 
 ### Kiểu tính cách AI
 | Chế độ | Mô tả |
 |--------|-------|
-| **Balanced** | Cân bằng tấn công và phòng thủ. Ổn định, ít mắc lỗi. Phù hợp để làm quen. |
-| **Aggressive** | Ưu tiên xóa nhiều dòng và gửi rác liên tục, bất chấp lưới của chính mình. |
-| **Defensive** | Giữ lưới thấp, chơi an toàn, chờ đối thủ mắc lỗi để phản công. |
+| **Balanced** | Cân bằng tấn công và phòng thủ. Ổn định, ít mắc lỗi. |
+| **Aggressive** | Liên tục gửi rác, bất chấp lưới của chính mình. |
+| **Defensive** | Giữ lưới thấp, chờ đối thủ mắc lỗi. |
+
+> 💡 Hover vào nút `!` bên cạnh AI Mode để xem tooltip mô tả chi tiết từng kiểu.
 
 ---
 
-## ⚙️ Cài đặt hệ thống
+## ⚙️ Cài đặt hệ thống (CONFIG)
 
-Truy cập menu **CONFIG** để điều chỉnh:
+Truy cập menu **CONFIG** từ Main Menu để điều chỉnh:
 
-- 🔊 **Master Volume** — thanh trượt 0–100%
-- 🎵 **Sound Effects** — bật/tắt SFX
-- ☀️ **Brightness** — Dim / Normal / Bright
-- ⌨️ **Key Bindings** — tuỳ chỉnh phím điều khiển
+| Mục | Loại | Mô tả |
+|-----|------|-------|
+| 🔵 Master Volume | Thanh trượt 0–100% | Âm lượng tổng |
+| 🟣 Music | Thanh trượt 0–100% | Âm lượng nhạc nền |
+| 🔴 Sound Effects | Thanh trượt 0–100% | Âm lượng hiệu ứng |
+| ☀️ Brightness | Toggle | Dim / Normal / Bright |
+| ⌨️ Key Bindings | Button | Tuỳ chỉnh phím Solo |
 
 Cấu hình được lưu tự động vào `tetris_config.json`.
 
@@ -158,9 +189,29 @@ Cấu hình được lưu tự động vào `tetris_config.json`.
 
 ## 🎵 Âm thanh
 
-Game tự động sinh file âm thanh mặc định nếu không tìm thấy:
-- **Nhạc nền**: Đặt file `.mp3`, `.wav`, `.ogg` hoặc `.m4a` vào `audio_assets/music/`
-- **SFX**: Tự động sinh sẵn trong `audio_assets/sfx/`
+### Nhạc nền
+Đặt file nhạc vào `audio_assets/music/` với tên `background` và đuôi:
+
+```
+audio_assets/music/background.mp3   ← ưu tiên nhất
+audio_assets/music/background.wav
+audio_assets/music/background.ogg
+```
+
+Game tự tìm theo thứ tự `.mp4 → .mp3 → .wav → .ogg → .m4a`. Nếu không có file nào, nhạc mặc định (WAV tổng hợp) sẽ được tạo tự động.
+
+### Hiệu ứng âm thanh (SFX)
+SFX được **tự động sinh** vào `audio_assets/sfx/` khi lần đầu chạy game:
+
+| File | Khi nào phát |
+|------|-------------|
+| `button.wav` | Nhấn nút menu |
+| `move.wav` | Di chuyển khối |
+| `rotate.wav` | Xoay khối |
+| `hard_drop.wav` | Hard Drop |
+| `hold.wav` | Hold piece |
+| `clear.wav` | Xóa dòng |
+| `game_over.wav` | Game Over |
 
 ---
 
@@ -171,8 +222,8 @@ Game tự động sinh file âm thanh mặc định nếu không tìm thấy:
 | Ngôn ngữ | Python 3.10+ |
 | Game Engine | [pygame-ce](https://pyga.me/) 2.5+ |
 | Font | Press Start 2P (Google Fonts) |
-| Định dạng cấu hình | JSON |
-| Âm thanh | WAV tự sinh + MP3 bên ngoài |
+| Cấu hình | JSON |
+| Âm thanh | WAV tự sinh + file nhạc bên ngoài (MP3/WAV/OGG) |
 
 ---
 
