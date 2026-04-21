@@ -65,6 +65,7 @@ def main():
     config_dirty = False
     init_audio()
     update_audio_settings(sys_config)
+    play_music("background")
 
     solo_logic = None
     fall_time = 0; particles = []
